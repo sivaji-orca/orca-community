@@ -1,0 +1,60 @@
+---
+description: MuleSoft development patterns and conventions for this project
+globs: ["projects/**/*.xml", "projects/**/*.raml", "projects/**/*.dwl", "projects/**/*.yaml", "projects/**/pom.xml"]
+---
+
+# MuleSoft Development Patterns
+
+## RAML-First Design
+
+- All APIs start with a RAML 1.0 spec in `src/main/resources/api/`
+- Types go in `src/main/resources/api/types/` as separate .raml files
+- Examples go in `src/main/resources/api/examples/` as .json files
+- APIkit generates flow stubs from the RAML spec
+
+## Mule Flow Conventions
+
+- Main flow file: `<api-name>.xml` -- contains HTTP listener, APIkit router, config properties
+- Implementation file: `<api-name>-impl.xml` -- contains the flow implementations
+- Error handler: `global-error-handler.xml` -- shared error handling
+- Configuration: `<configuration-properties file="config-${mule.env}.yaml"/>`
+
+## Flow Naming
+
+APIkit-generated flow names follow the pattern:
+- `get:\resource:APIkit_Config`
+- `post:\resource:application\json:APIkit_Config`
+- `get:\resource\(paramName):APIkit_Config`
+
+## DataWeave Conventions
+
+- Use `%dw 2.0` header
+- Avoid variable names that conflict with built-in functions (e.g., don't use `now` as a variable, use `ts`)
+- Use array slicing `arr[offset to endIdx]` instead of `drop`/`take` which may not be available
+- Module file names use underscores, not hyphens (e.g., `validation_rules.dwl` not `validation-rules.dwl`)
+
+## Object Store Usage
+
+- Persistent Object Store for data that survives restarts
+- `os:retrieve-all` to list, `os:store` to create/update, `os:retrieve` by key, `os:remove` to delete
+- TTL and maxEntries configured in the XML
+
+## Config Properties
+
+- `config-local.yaml` for local development
+- `config-cloudhub.yaml` for CloudHub deployment
+- Property placeholders: `${http.host}`, `${http.port}`, `${sf.host}`, etc.
+
+## Maven / POM
+
+- Packaging: `mule-application`
+- GroupId matches Anypoint Org ID
+- CloudHub2 profile uses `connectedAppClientId`/`connectedAppClientSecret`
+- Properties block includes `<mule.env>cloudhub</mule.env>` in the CH2 deployment config
+- Mule runtime: 4.11.2, CloudHub target version: `4.11.2:3e-java17`
+
+## Error Handling
+
+- Global error handler maps APIkit errors to JSON responses with appropriate HTTP status codes
+- Error types: APIKIT:BAD_REQUEST (400), APIKIT:NOT_FOUND (404), APIKIT:METHOD_NOT_ALLOWED (405), ANY (500)
+- Each error response includes: message, errorCode, timestamp

@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:os="http://www.mulesoft.org/schema/mule/os"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <!-- ======================== -->
+    <!-- CRUD Proxy to Customer Management API -->
+    <!-- ======================== -->
+
+    <!-- GET /customers -->
+    <flow name="get:\customers:APIkit_Config">
+        <logger level="INFO" message="GET /customers - Listing customers via customer-management-api"/>
+
+        <http:request config-ref="Customer_API_Config" method="GET" path="${backend.customer-api.basePath}/customers">
+            <http:query-params><![CDATA[#[output application/java
+---
+{
+    ("name": attributes.queryParams.name) if (attributes.queryParams.name != null),
+    ("status": attributes.queryParams.status) if (attributes.queryParams.status != null),
+    ("limit": attributes.queryParams.limit default "25"),
+    ("offset": attributes.queryParams.offset default "0")
+}]]]></http:query-params>
+        </http:request>
+
+        <flow-ref name="audit-log-subflow" target="auditResult">
+            <target-variable variableName="auditResult"/>
+        </flow-ref>
+
+        <set-variable variableName="auditOperation" value="LIST"/>
+        <set-variable variableName="auditEntity" value="customer"/>
+        <set-variable variableName="auditDetails" value="Listed customers"/>
+    </flow>
+
+    <!-- POST /customers -->
+    <flow name="post:\customers:application\json:APIkit_Config">
+        <logger level="INFO" message="POST /customers - Creating customer via customer-management-api"/>
+
+        <set-variable variableName="requestBody" value="#[payload]"/>
+
+        <http:request config-ref="Customer_API_Config" method="POST" path="${backend.customer-api.basePath}/customers">
+            <http:body><![CDATA[#[vars.requestBody]]]></http:body>
+            <http:headers><![CDATA[#[output application/java --- {"Content-Type": "application/json"}]]]></http:headers>
+        </http:request>
+
+        <set-variable variableName="createdCustomer" value="#[payload]"/>
+        <set-variable variableName="httpStatus" value="#[201]"/>
+
+        <set-variable variableName="auditKey" value="#['audit-' ++ uuid()]"/>
+        <os:store objectStore="Audit_Store" key="#[vars.auditKey]">
+            <os:value><![CDATA[#[output application/java
+---
+{
+    operation: "CREATE",
+    entity: "customer",
+    timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"},
+    details: "Created customer " ++ (vars.createdCustomer.firstName default "") ++ " " ++ (vars.createdCustomer.lastName default "")
+}]]]></os:value>
+        </os:store>
+
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.createdCustomer]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- GET /customers/{customerId} -->
+    <flow name="get:\customers\(customerId):APIkit_Config">
+        <logger level="INFO" message="#['GET /customers/' ++ attributes.uriParams.customerId ++ ' via customer-management-api']"/>
+
+        <http:request config-ref="Customer_API_Config" method="GET" path="#['${backend.customer-api.basePath}/customers/' ++ attributes.uriParams.customerId]"/>
+
+        <set-variable variableName="auditKey" value="#['audit-' ++ uuid()]"/>
+        <os:store objectStore="Audit_Store" key="#[vars.auditKey]">
+            <os:value><![CDATA[#[output application/java
+---
+{
+    operation: "READ",
+    entity: "customer",
+    timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"},
+    details: "Retrieved customer " ++ attributes.uriParams.customerId
+}]]]></os:value>
+        </os:store>
+    </flow>
+
+    <!-- PUT /customers/{customerId} -->
+    <flow name="put:\customers\(customerId):application\json:APIkit_Config">
+        <logger level="INFO" message="#['PUT /customers/' ++ attributes.uriParams.customerId ++ ' via customer-management-api']"/>
+
+        <set-variable variableName="requestBody" value="#[payload]"/>
+        <set-variable variableName="customerId" value="#[attributes.uriParams.customerId]"/>
+
+        <http:request config-ref="Customer_API_Config" method="PUT" path="#['${backend.customer-api.basePath}/customers/' ++ vars.customerId]">
+            <http:body><![CDATA[#[vars.requestBody]]]></http:body>
+            <http:headers><![CDATA[#[output application/java --- {"Content-Type": "application/json"}]]]></http:headers>
+        </http:request>
+
+        <set-variable variableName="updatedCustomer" value="#[payload]"/>
+
+        <set-variable variableName="auditKey" value="#['audit-' ++ uuid()]"/>
+        <os:store objectStore="Audit_Store" key="#[vars.auditKey]">
+            <os:value><![CDATA[#[output application/java
+---
+{
+    operation: "UPDATE",
+    entity: "customer",
+    timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"},
+    details: "Updated customer " ++ vars.customerId
+}]]]></os:value>
+        </os:store>
+
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.updatedCustomer]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- DELETE /customers/{customerId} -->
+    <flow name="delete:\customers\(customerId):APIkit_Config">
+        <logger level="INFO" message="#['DELETE /customers/' ++ attributes.uriParams.customerId ++ ' via customer-management-api']"/>
+
+        <set-variable variableName="customerId" value="#[attributes.uriParams.customerId]"/>
+
+        <http:request config-ref="Customer_API_Config" method="DELETE" path="#['${backend.customer-api.basePath}/customers/' ++ vars.customerId]"/>
+
+        <set-variable variableName="httpStatus" value="#[204]"/>
+
+        <set-variable variableName="auditKey" value="#['audit-' ++ uuid()]"/>
+        <os:store objectStore="Audit_Store" key="#[vars.auditKey]">
+            <os:value><![CDATA[#[output application/java
+---
+{
+    operation: "DELETE",
+    entity: "customer",
+    timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"},
+    details: "Deleted customer " ++ vars.customerId
+}]]]></os:value>
+        </os:store>
+
+        <set-payload value="#[null]"/>
+    </flow>
+
+    <!-- ======================== -->
+    <!-- Sync Flows -->
+    <!-- ======================== -->
+
+    <!-- POST /sync/to-salesforce -->
+    <flow name="post:\sync\to-salesforce:APIkit_Config">
+        <logger level="INFO" message="POST /sync/to-salesforce - Syncing customers to Salesforce"/>
+
+        <http:request config-ref="Customer_API_Config" method="GET" path="${backend.customer-api.basePath}/customers">
+            <http:query-params><![CDATA[#[output application/java --- {"limit": "1000", "offset": "0"}]]]></http:query-params>
+        </http:request>
+
+        <set-variable variableName="customers" value="#[payload.customers]"/>
+        <set-variable variableName="syncedCount" value="#[0]"/>
+        <set-variable variableName="failedCount" value="#[0]"/>
+
+        <foreach collection="#[vars.customers]">
+            <try>
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    Name: payload.firstName ++ " " ++ payload.lastName,
+    Email__c: payload.email,
+    Phone__c: payload.phone,
+    Company__c: payload.company,
+    Status__c: payload.status,
+    ExternalId__c: payload.id
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+
+                <http:request config-ref="SF_SAPI_Config" method="POST" path="${backend.sf-sapi.basePath}/accounts">
+                    <http:headers><![CDATA[#[output application/java --- {"Content-Type": "application/json"}]]]></http:headers>
+                </http:request>
+
+                <set-variable variableName="syncedCount" value="#[vars.syncedCount + 1]"/>
+            <error-handler>
+                <on-error-continue>
+                    <logger level="WARN" message="#['Failed to sync customer to SF: ' ++ error.description default 'unknown']"/>
+                    <set-variable variableName="failedCount" value="#[vars.failedCount + 1]"/>
+                </on-error-continue>
+            </error-handler>
+            </try>
+        </foreach>
+
+        <os:store objectStore="Sync_Status_Store" key="lastSyncToSf" failIfPresent="false">
+            <os:value><![CDATA[#[now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"}]]]></os:value>
+        </os:store>
+
+        <set-variable variableName="auditKey" value="#['audit-' ++ uuid()]"/>
+        <os:store objectStore="Audit_Store" key="#[vars.auditKey]">
+            <os:value><![CDATA[#[output application/java
+---
+{
+    operation: "SYNC_TO_SF",
+    entity: "customer",
+    timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"},
+    details: "Synced " ++ vars.syncedCount ++ " customers to Salesforce, " ++ vars.failedCount ++ " failed"
+}]]]></os:value>
+        </os:store>
+
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    synced: vars.syncedCount,
+    failed: vars.failedCount,
+    direction: "to-salesforce",
+    timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"}
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- POST /sync/from-salesforce -->
+    <flow name="post:\sync\from-salesforce:APIkit_Config">
+        <logger level="INFO" message="POST /sync/from-salesforce - Syncing accounts from Salesforce"/>
+
+        <http:request config-ref="SF_SAPI_Config" method="GET" path="${backend.sf-sapi.basePath}/accounts"/>
+
+        <set-variable variableName="accounts" value="#[payload.accounts default payload]"/>
+        <set-variable variableName="syncedCount" value="#[0]"/>
+        <set-variable variableName="failedCount" value="#[0]"/>
+
+        <foreach collection="#[vars.accounts]">
+            <try>
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+var nameParts = (payload.Name default "") splitBy " "
+---
+{
+    firstName: nameParts[0] default "",
+    lastName: if (sizeOf(nameParts) > 1) (nameParts[1 to -1] joinBy " ") else "",
+    email: payload.Email__c default payload.email default "",
+    phone: payload.Phone__c default payload.phone,
+    company: payload.Company__c default payload.company,
+    status: payload.Status__c default payload.status default "prospect",
+    syncId: payload.Id default payload.id
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+
+                <http:request config-ref="Customer_API_Config" method="POST" path="${backend.customer-api.basePath}/customers">
+                    <http:headers><![CDATA[#[output application/java --- {"Content-Type": "application/json"}]]]></http:headers>
+                </http:request>
+
+                <set-variable variableName="syncedCount" value="#[vars.syncedCount + 1]"/>
+            <error-handler>
+                <on-error-continue>
+                    <logger level="WARN" message="#['Failed to sync account from SF: ' ++ error.description default 'unknown']"/>
+                    <set-variable variableName="failedCount" value="#[vars.failedCount + 1]"/>
+                </on-error-continue>
+            </error-handler>
+            </try>
+        </foreach>
+
+        <os:store objectStore="Sync_Status_Store" key="lastSyncFromSf" failIfPresent="false">
+            <os:value><![CDATA[#[now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"}]]]></os:value>
+        </os:store>
+
+        <set-variable variableName="auditKey" value="#['audit-' ++ uuid()]"/>
+        <os:store objectStore="Audit_Store" key="#[vars.auditKey]">
+            <os:value><![CDATA[#[output application/java
+---
+{
+    operation: "SYNC_FROM_SF",
+    entity: "customer",
+    timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"},
+    details: "Synced " ++ vars.syncedCount ++ " accounts from Salesforce, " ++ vars.failedCount ++ " failed"
+}]]]></os:value>
+        </os:store>
+
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    synced: vars.syncedCount,
+    failed: vars.failedCount,
+    direction: "from-salesforce",
+    timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"}
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- GET /sync/status -->
+    <flow name="get:\sync\status:APIkit_Config">
+        <logger level="INFO" message="GET /sync/status - Retrieving sync status"/>
+
+        <os:retrieve objectStore="Sync_Status_Store" key="lastSyncToSf" target="lastSyncToSf">
+            <os:default-value><![CDATA[#[null]]]></os:default-value>
+        </os:retrieve>
+
+        <os:retrieve objectStore="Sync_Status_Store" key="lastSyncFromSf" target="lastSyncFromSf">
+            <os:default-value><![CDATA[#[null]]]></os:default-value>
+        </os:retrieve>
+
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    lastSyncToSf: vars.lastSyncToSf,
+    lastSyncFromSf: vars.lastSyncFromSf,
+    pendingSync: false
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- ======================== -->
+    <!-- Health & Audit -->
+    <!-- ======================== -->
+
+    <!-- GET /health -->
+    <flow name="get:\health:APIkit_Config">
+        <logger level="INFO" message="GET /health - Checking downstream health"/>
+
+        <set-variable variableName="customerApiStatus" value="UP"/>
+        <set-variable variableName="sfApiStatus" value="UP"/>
+
+        <try>
+            <http:request config-ref="Customer_API_Config" method="GET" path="${backend.customer-api.basePath}/health"/>
+        <error-handler>
+            <on-error-continue>
+                <set-variable variableName="customerApiStatus" value="DOWN"/>
+                <logger level="WARN" message="customer-management-api health check failed"/>
+            </on-error-continue>
+        </error-handler>
+        </try>
+
+        <try>
+            <http:request config-ref="SF_SAPI_Config" method="GET" path="${backend.sf-sapi.basePath}/health"/>
+        <error-handler>
+            <on-error-continue>
+                <set-variable variableName="sfApiStatus" value="DOWN"/>
+                <logger level="WARN" message="customer-sf-sapi health check failed"/>
+            </on-error-continue>
+        </error-handler>
+        </try>
+
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: if (vars.customerApiStatus == "UP" and vars.sfApiStatus == "UP") "UP" else "DEGRADED",
+    api: "customer-papi",
+    version: "v1",
+    downstream: {
+        customerApi: vars.customerApiStatus,
+        salesforceApi: vars.sfApiStatus
+    },
+    timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"}
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- GET /audit -->
+    <flow name="get:\audit:APIkit_Config">
+        <logger level="INFO" message="GET /audit - Retrieving audit trail"/>
+
+        <os:retrieve-all objectStore="Audit_Store" target="allAuditEntries"/>
+
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+var reqLimit = (attributes.queryParams.limit default "20") as Number
+var entries = vars.allAuditEntries pluck ((value, key) -> value)
+var sorted = entries orderBy -(($.timestamp default "") as String)
+var limited = sorted[0 to (reqLimit - 1)] default sorted
+---
+{
+    events: limited
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- ======================== -->
+    <!-- Shared Sub-flow for Audit Logging -->
+    <!-- ======================== -->
+
+    <sub-flow name="audit-log-subflow">
+        <set-variable variableName="auditKey" value="#['audit-' ++ uuid()]"/>
+        <os:store objectStore="Audit_Store" key="#[vars.auditKey]">
+            <os:value><![CDATA[#[output application/java
+---
+{
+    operation: vars.auditOperation default "UNKNOWN",
+    entity: vars.auditEntity default "unknown",
+    timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"},
+    details: vars.auditDetails default ""
+}]]]></os:value>
+        </os:store>
+    </sub-flow>
+
+</mule>

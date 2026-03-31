@@ -1,0 +1,67 @@
+---
+description: Deployment patterns for local Mule runtime and CloudHub 2.0
+globs: ["projects/**/pom.xml", "projects/**/config-*.yaml", "scripts/*"]
+---
+
+# Deployment Guide
+
+## Local Development
+
+### Mule Standalone Runtime
+- Location: `softwares/mule-standalone/` (Mule EE 4.11.2)
+- Start: `$MULE_HOME/bin/mule start`
+- Stop: `$MULE_HOME/bin/mule stop`
+- Apps dir: `$MULE_HOME/apps/` -- drop JAR files here for hot deploy
+- Logs: `$MULE_HOME/logs/mule_ee.log`
+- System property: `-Dmule.env=local` (set in `conf/wrapper.conf`)
+
+### Building and Deploying Locally
+```bash
+cd projects/<api-name>
+mvn clean package -DskipTests
+cp target/<api-name>-*.jar $MULE_HOME/apps/
+```
+
+### Port Convention
+| API | Port |
+|-----|------|
+| customer-papi | 8081 |
+| customer-management-api | 8082 |
+| customer-sf-sapi | 8083 |
+| customer-mock-service | 8084 |
+
+## CloudHub 2.0 Deployment
+
+### Prerequisites
+- Connected App credentials in Maven `settings.xml` (server ID: `anypoint-exchange-v3`)
+- Org ID as groupId in pom.xml
+
+### Publish to Exchange
+```bash
+mvn clean deploy -DskipTests
+```
+
+### Deploy to CloudHub
+```bash
+mvn clean package mule:deploy -DskipTests -Pcloudhub2 \
+  -Dch2.clientId=<CLIENT_ID> \
+  -Dch2.clientSecret=<CLIENT_SECRET> \
+  -Dch2.environment=Sandbox \
+  -Dch2.target=Cloudhub-US-East-2 \
+  "-Dch2.muleVersion=4.11.2:3e-java17" \
+  -Dch2.applicationName=<prefix>-<api-name> \
+  -Dch2.replicas=1 \
+  -Dch2.vCores=0.1
+```
+
+### CloudHub App Naming
+Uses `{org.cloudhub_prefix}` from config.yaml as prefix:
+- `{prefix}-customer-papi`
+- `{prefix}-customer-mgmt-api`
+- `{prefix}-customer-sf-sapi`
+
+### Important Notes
+- Always set `mule.env=cloudhub` in the CloudHub deployment properties block
+- Runtime version must match what's available on the target (check via Anypoint API)
+- Asset must be published to Exchange before first CloudHub deploy
+- Subsequent deploys can use `mule:deploy` directly (skip Exchange re-publish)

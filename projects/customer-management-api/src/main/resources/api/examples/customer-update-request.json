@@ -1,0 +1,11 @@
+{
+  "phone": "+1-555-0199",
+  "status": "active",
+  "address": {
+    "street": "789 Market Street",
+    "city": "San Francisco",
+    "state": "CA",
+    "zipCode": "94103",
+    "country": "US"
+  }
+}

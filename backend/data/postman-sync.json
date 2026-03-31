@@ -1,0 +1,46 @@
+{
+  "hello-world-3": {
+    "collectionUid": "52611210-5f39e610-ac79-4c5b-9087-68dd4b41b737",
+    "lastSynced": "2026-03-30T02:56:10.419Z"
+  },
+  "sathish": {
+    "collectionUid": "52611210-eca4baa2-8546-4b24-a2f1-69818fe3f986",
+    "lastSynced": "2026-03-30T02:56:20.821Z"
+  },
+  "sf86-canonical-model": {
+    "collectionUid": "52611210-ecba41de-1134-4ce2-91c9-f7d6ffa9b702",
+    "lastSynced": "2026-03-30T02:56:17.332Z"
+  },
+  "sf-sapi": {
+    "collectionUid": "52611210-f0db3d60-12f9-4fe6-bcef-0ee0b977942a",
+    "lastSynced": "2026-03-30T02:56:11.570Z"
+  },
+  "diss-papi": {
+    "collectionUid": "52611210-447054db-2bed-4b6e-a6ba-7f335ac0e34b",
+    "lastSynced": "2026-03-30T02:56:12.515Z"
+  },
+  "sf86-common-lib": {
+    "collectionUid": "52611210-6af25cf7-0a12-4471-9af9-148bd0c4d979",
+    "lastSynced": "2026-03-30T02:56:13.874Z"
+  },
+  "rosetta-stone-api": {
+    "collectionUid": "52611210-a9aad6ec-696c-4b80-8189-a6392a740d55",
+    "lastSynced": "2026-03-30T02:56:14.846Z"
+  },
+  "sf86-pe-api": {
+    "collectionUid": "52611210-530c8b15-f5bc-4156-bff0-a9abad161425",
+    "lastSynced": "2026-03-30T02:56:15.900Z"
+  },
+  "sf86-tracking-api": {
+    "collectionUid": "52611210-760567df-7ffe-478b-b356-13cdfa0473fe",
+    "lastSynced": "2026-03-30T02:56:18.443Z"
+  },
+  "diss-sapi": {
+    "collectionUid": "52611210-8e5f36dc-0ad7-4876-842f-39962eba2e5e",
+    "lastSynced": "2026-03-30T02:56:19.667Z"
+  },
+  "sf86-mock-service": {
+    "collectionUid": "52611210-54867104-8afd-43bb-bff8-b97fdc843b4c",
+    "lastSynced": "2026-03-30T02:56:21.911Z"
+  }
+}

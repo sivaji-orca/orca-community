@@ -1,0 +1,51 @@
+---
+description: Salesforce integration patterns for the Customer Management use case
+globs: ["projects/customer-sf-sapi/**", "projects/customer-papi/**", "backend/src/**/salesforce*"]
+---
+
+# Salesforce Integration
+
+## Architecture
+
+The Customer Management use case implements bidirectional sync between MuleSoft Object Store and Salesforce:
+
+- `customer-papi` (Process API) orchestrates sync operations
+- `customer-sf-sapi` (System API) connects to Salesforce via Salesforce Connector
+- `customer-mock-service` simulates Salesforce responses for local dev
+
+## Data Mapping: Customer <-> SF Account
+
+| Customer Field | SF Account Field | Notes |
+|---------------|-----------------|-------|
+| id | Id | SF Id is 18-char, local is UUID |
+| firstName | FirstName | From Account or Contact |
+| lastName | LastName | From Contact (linked to Account) |
+| email | PersonEmail or Contact.Email | Depends on Account type |
+| phone | Phone | |
+| company | Name | Account Name |
+| status | Active__c or custom | May need custom field |
+| syncId | Id | SF record ID stored for correlation |
+
+## Salesforce Connector Config
+
+- Authentication: Username-Password OAuth flow
+- Properties in config YAML:
+  - `sf.username`, `sf.password`, `sf.securityToken`
+  - `sf.url` (login endpoint)
+- For local dev, `config-local.yaml` points `sf.host` to the mock service (port 8084)
+
+## SF CLI Usage (Dashboard Backend)
+
+The backend uses Salesforce CLI (`sf`) for org management:
+- `sf org display` -- get org info
+- `sf data query --query "SOQL"` -- run queries
+- `sf org login password` -- authenticate
+
+Credentials are stored in the encrypted vault under category "salesforce".
+
+## Sync Logic (Process API)
+
+- **To Salesforce**: reads customers from Object Store, upserts into SF Account via sf-sapi
+- **From Salesforce**: queries SF Accounts via sf-sapi, upserts into Object Store
+- Conflict resolution: last-write-wins based on updatedAt timestamp
+- Audit trail: every sync operation logged to a dedicated Object Store

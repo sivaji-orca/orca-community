@@ -1,0 +1,15 @@
+{
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "email": "jane.doe@example.com",
+  "phone": "+1-555-0142",
+  "company": "Acme Corp",
+  "status": "active",
+  "address": {
+    "street": "123 Main Street",
+    "city": "San Francisco",
+    "state": "CA",
+    "zipCode": "94105",
+    "country": "US"
+  }
+}

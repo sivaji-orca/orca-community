@@ -1,0 +1,48 @@
+---
+description: Dashboard frontend and backend conventions
+globs: ["frontend/src/**", "backend/src/routes/**", "backend/src/services/**"]
+---
+
+# Dashboard Conventions
+
+## Frontend Architecture
+
+- **Framework**: React 19, TypeScript, Vite 8, TailwindCSS v4
+- **State**: No URL router; tabs are local React state in Dashboard components
+- **API Client**: `frontend/src/api/client.ts` -- wraps fetch with JWT auth
+- **Auth**: `useAuth` hook manages login/logout/user state; JWT stored in memory
+
+## Tab Structure (8 tabs)
+
+| Tab | Component | Backend Routes |
+|-----|-----------|---------------|
+| Overview | `Overview.tsx` | `/api/anypoint`, `/api/runtime`, `/api/salesforce` |
+| API Design | `ApiDesign.tsx` | `/api/anypoint/api-contracts` |
+| Projects | `ProjectExplorer.tsx` | `/api/projects` |
+| Deploy | `Deploy.tsx` | `/api/deploy`, `/api/runtime`, `/api/anypoint` |
+| Monitoring | `Monitoring.tsx` | `/api/logs`, `/api/analytics` |
+| Postman | `PostmanManager.tsx` | `/api/postman` |
+| Git | `GitManager.tsx` | `/api/git` |
+| Settings | `Settings.tsx` | `/api/team`, `/api/secrets`, `/api/salesforce` |
+
+## Backend Route Pattern
+
+Each route file in `backend/src/routes/`:
+- Imports `authenticateToken` from middleware for JWT protection
+- Delegates to a service in `backend/src/services/`
+- Returns JSON; errors use status 502 for upstream failures, 400 for bad input
+- Admin-only routes use `requireRole("administrator")`
+
+## Adding a New Tab
+
+1. Create component in `frontend/src/pages/developer/`
+2. Import and add to `Dashboard.tsx` tab array and conditional render
+3. Add corresponding backend route if needed
+4. Add service file for business logic
+
+## Styling
+
+- Indigo/slate color scheme
+- Cards use the shared `<Card>` component
+- Status indicators use `<StatusBadge>`
+- Layout shell provides header with user info and horizontal tab bar

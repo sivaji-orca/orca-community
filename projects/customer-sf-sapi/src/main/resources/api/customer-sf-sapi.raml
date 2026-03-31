@@ -1,0 +1,107 @@
+#%RAML 1.0
+title: Customer Salesforce System API
+version: v1
+baseUri: http://localhost:8083/api
+mediaType: application/json
+
+types:
+  Account: !include types/account.raml
+  AccountCreate:
+    type: object
+    properties:
+      Name: string
+      Phone?: string
+      Website?: string
+      Industry?: string
+      Description?: string
+  AccountUpdate:
+    type: object
+    properties:
+      Name?: string
+      Phone?: string
+      Website?: string
+      Industry?: string
+      Description?: string
+  ErrorResponse:
+    type: object
+    properties:
+      errorCode: string
+      message: string
+      timestamp: datetime
+
+/accounts:
+  get:
+    displayName: List Accounts
+    queryParameters:
+      name?: string
+      limit?:
+        type: integer
+        default: 25
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include examples/account-list-response.json
+  post:
+    displayName: Create Account
+    body:
+      application/json:
+        type: AccountCreate
+        example: !include examples/account-create-request.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: Account
+      400:
+        body:
+          application/json:
+            type: ErrorResponse
+  /{accountId}:
+    get:
+      displayName: Get Account
+      responses:
+        200:
+          body:
+            application/json:
+              type: Account
+        404:
+          body:
+            application/json:
+              type: ErrorResponse
+    put:
+      displayName: Update Account
+      body:
+        application/json:
+          type: AccountUpdate
+      responses:
+        200:
+          body:
+            application/json:
+              type: Account
+        404:
+          body:
+            application/json:
+              type: ErrorResponse
+    delete:
+      displayName: Delete Account
+      responses:
+        204:
+          description: Account deleted
+        404:
+          body:
+            application/json:
+              type: ErrorResponse
+
+/health:
+  get:
+    displayName: Health Check
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              status: UP
+              api: customer-sf-sapi
+              version: v1
+              timestamp: "2026-03-30T00:00:00Z"

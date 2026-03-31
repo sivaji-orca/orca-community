@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <!-- GET /accounts -->
+    <flow name="get:\accounts:APIkit_Config">
+        <logger level="INFO" message="GET /accounts - Listing accounts"/>
+        <http:request config-ref="SF_Mock_Config" method="GET" path="${sf.basePath}/accounts">
+            <http:query-params><![CDATA[#[output application/java --- {
+                ("name": attributes.queryParams.name) if attributes.queryParams.name?,
+                ("limit": attributes.queryParams.limit) if attributes.queryParams.limit?
+            }]]]></http:query-params>
+        </http:request>
+        <logger level="INFO" message="GET /accounts - Completed successfully"/>
+        <error-handler>
+            <on-error-propagate type="HTTP:CONNECTIVITY, HTTP:TIMEOUT">
+                <logger level="ERROR" message="GET /accounts - Mock service unavailable: #[error.description]"/>
+                <ee:transform>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    errorCode: "SERVICE_UNAVAILABLE",
+    message: "Salesforce service is unavailable",
+    timestamp: now()
+}]]></ee:set-payload>
+                </ee:transform>
+                <set-variable variableName="httpStatus" value="#[503]"/>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+
+    <!-- POST /accounts -->
+    <flow name="post:\accounts:APIkit_Config">
+        <logger level="INFO" message="POST /accounts - Creating account"/>
+        <http:request config-ref="SF_Mock_Config" method="POST" path="${sf.basePath}/accounts">
+            <http:body><![CDATA[#[output application/json --- payload]]]></http:body>
+            <http:response-validator>
+                <http:success-status-code-validator values="200..299"/>
+            </http:response-validator>
+        </http:request>
+        <set-variable variableName="httpStatus" value="#[201]"/>
+        <logger level="INFO" message="POST /accounts - Account created successfully"/>
+        <error-handler>
+            <on-error-propagate type="HTTP:BAD_REQUEST">
+                <logger level="ERROR" message="POST /accounts - Bad request: #[error.description]"/>
+                <ee:transform>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    errorCode: "BAD_REQUEST",
+    message: "Invalid account data",
+    timestamp: now()
+}]]></ee:set-payload>
+                </ee:transform>
+                <set-variable variableName="httpStatus" value="#[400]"/>
+            </on-error-propagate>
+            <on-error-propagate type="HTTP:CONNECTIVITY, HTTP:TIMEOUT">
+                <logger level="ERROR" message="POST /accounts - Mock service unavailable: #[error.description]"/>
+                <ee:transform>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    errorCode: "SERVICE_UNAVAILABLE",
+    message: "Salesforce service is unavailable",
+    timestamp: now()
+}]]></ee:set-payload>
+                </ee:transform>
+                <set-variable variableName="httpStatus" value="#[503]"/>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+
+    <!-- GET /accounts/{accountId} -->
+    <flow name="get:\accounts\(accountId):APIkit_Config">
+        <logger level="INFO" message="#['GET /accounts/' ++ attributes.uriParams.accountId ++ ' - Retrieving account']"/>
+        <http:request config-ref="SF_Mock_Config" method="GET" path="#['${sf.basePath}/accounts/' ++ attributes.uriParams.accountId]">
+            <http:response-validator>
+                <http:success-status-code-validator values="200..299"/>
+            </http:response-validator>
+        </http:request>
+        <logger level="INFO" message="#['GET /accounts/' ++ attributes.uriParams.accountId ++ ' - Completed successfully']"/>
+        <error-handler>
+            <on-error-propagate type="HTTP:NOT_FOUND">
+                <logger level="WARN" message="#['GET /accounts/' ++ error.muleMessage.attributes.statusCode as String ++ ' - Account not found']"/>
+                <ee:transform>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    errorCode: "NOT_FOUND",
+    message: "Account not found",
+    timestamp: now()
+}]]></ee:set-payload>
+                </ee:transform>
+                <set-variable variableName="httpStatus" value="#[404]"/>
+            </on-error-propagate>
+            <on-error-propagate type="HTTP:CONNECTIVITY, HTTP:TIMEOUT">
+                <logger level="ERROR" message="GET /accounts/{accountId} - Mock service unavailable: #[error.description]"/>
+                <ee:transform>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    errorCode: "SERVICE_UNAVAILABLE",
+    message: "Salesforce service is unavailable",
+    timestamp: now()
+}]]></ee:set-payload>
+                </ee:transform>
+                <set-variable variableName="httpStatus" value="#[503]"/>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+
+    <!-- PUT /accounts/{accountId} -->
+    <flow name="put:\accounts\(accountId):APIkit_Config">
+        <logger level="INFO" message="#['PUT /accounts/' ++ attributes.uriParams.accountId ++ ' - Updating account']"/>
+        <http:request config-ref="SF_Mock_Config" method="PUT" path="#['${sf.basePath}/accounts/' ++ attributes.uriParams.accountId]">
+            <http:body><![CDATA[#[output application/json --- payload]]]></http:body>
+            <http:response-validator>
+                <http:success-status-code-validator values="200..299"/>
+            </http:response-validator>
+        </http:request>
+        <logger level="INFO" message="#['PUT /accounts/' ++ attributes.uriParams.accountId ++ ' - Updated successfully']"/>
+        <error-handler>
+            <on-error-propagate type="HTTP:NOT_FOUND">
+                <logger level="WARN" message="#['PUT /accounts/' ++ error.muleMessage.attributes.statusCode as String ++ ' - Account not found']"/>
+                <ee:transform>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    errorCode: "NOT_FOUND",
+    message: "Account not found",
+    timestamp: now()
+}]]></ee:set-payload>
+                </ee:transform>
+                <set-variable variableName="httpStatus" value="#[404]"/>
+            </on-error-propagate>
+            <on-error-propagate type="HTTP:CONNECTIVITY, HTTP:TIMEOUT">
+                <logger level="ERROR" message="PUT /accounts/{accountId} - Mock service unavailable: #[error.description]"/>
+                <ee:transform>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    errorCode: "SERVICE_UNAVAILABLE",
+    message: "Salesforce service is unavailable",
+    timestamp: now()
+}]]></ee:set-payload>
+                </ee:transform>
+                <set-variable variableName="httpStatus" value="#[503]"/>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+
+    <!-- DELETE /accounts/{accountId} -->
+    <flow name="delete:\accounts\(accountId):APIkit_Config">
+        <logger level="INFO" message="#['DELETE /accounts/' ++ attributes.uriParams.accountId ++ ' - Deleting account']"/>
+        <http:request config-ref="SF_Mock_Config" method="DELETE" path="#['${sf.basePath}/accounts/' ++ attributes.uriParams.accountId]">
+            <http:response-validator>
+                <http:success-status-code-validator values="200..299"/>
+            </http:response-validator>
+        </http:request>
+        <set-variable variableName="httpStatus" value="#[204]"/>
+        <set-payload value="#[null]"/>
+        <logger level="INFO" message="#['DELETE /accounts/' ++ attributes.uriParams.accountId ++ ' - Deleted successfully']"/>
+        <error-handler>
+            <on-error-propagate type="HTTP:NOT_FOUND">
+                <logger level="WARN" message="#['DELETE /accounts/' ++ error.muleMessage.attributes.statusCode as String ++ ' - Account not found']"/>
+                <ee:transform>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    errorCode: "NOT_FOUND",
+    message: "Account not found",
+    timestamp: now()
+}]]></ee:set-payload>
+                </ee:transform>
+                <set-variable variableName="httpStatus" value="#[404]"/>
+            </on-error-propagate>
+            <on-error-propagate type="HTTP:CONNECTIVITY, HTTP:TIMEOUT">
+                <logger level="ERROR" message="DELETE /accounts/{accountId} - Mock service unavailable: #[error.description]"/>
+                <ee:transform>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    errorCode: "SERVICE_UNAVAILABLE",
+    message: "Salesforce service is unavailable",
+    timestamp: now()
+}]]></ee:set-payload>
+                </ee:transform>
+                <set-variable variableName="httpStatus" value="#[503]"/>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+
+    <!-- GET /health -->
+    <flow name="get:\health:APIkit_Config">
+        <logger level="INFO" message="GET /health - Health check"/>
+        <ee:transform>
+            <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: "UP",
+    api: "customer-sf-sapi",
+    version: "v1",
+    timestamp: now()
+}]]></ee:set-payload>
+        </ee:transform>
+    </flow>
+
+</mule>

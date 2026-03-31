@@ -1,0 +1,48 @@
+# Orca Community Edition Configuration Template
+# Copy this file to config.yaml and fill in your organization's values
+# Run: cp config.template.yaml config.yaml
+
+# Organization Settings
+org:
+  name: "Your Company Name"
+  cloudhub_prefix: "myorg"          # prefix for CloudHub app names (e.g., myorg-customer-papi)
+
+# Anypoint Platform (MuleSoft)
+anypoint:
+  client_id: ""                     # Connected App Client ID
+  client_secret: ""                 # Connected App Client Secret
+  org_id: ""                        # Anypoint Organization ID
+  environment: "Sandbox"            # Target environment
+
+# Salesforce
+salesforce:
+  login_url: "https://login.salesforce.com"
+  instance_url: ""                  # e.g., https://your-org.develop.my.salesforce.com
+  username: ""
+  password: ""
+  security_token: ""
+  api_version: "62.0"
+
+# GitHub
+github:
+  token: ""                         # Personal access token (repo scope)
+  org: ""                           # GitHub org or username for repos
+
+# Postman
+postman:
+  api_key: ""                       # Postman API key
+
+# Mule Runtime
+mule:
+  runtime_version: "4.11.2"
+  cloudhub_runtime: "4.11.2:3e-java17"
+  java_version: "17"
+
+# Local Development Ports
+ports:
+  dashboard_backend: 3003
+  dashboard_frontend: 5173
+  customer_papi: 8081
+  customer_management_api: 8082
+  customer_sf_sapi: 8083
+  customer_mock_service: 8084

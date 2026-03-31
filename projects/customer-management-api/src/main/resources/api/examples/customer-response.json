@@ -1,0 +1,18 @@
+{
+  "id": "c7f3e2a1-5b4d-4e8f-9a1c-6d2e3f4a5b6c",
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "email": "jane.doe@example.com",
+  "phone": "+1-555-0142",
+  "company": "Acme Corp",
+  "status": "active",
+  "address": {
+    "street": "123 Main Street",
+    "city": "San Francisco",
+    "state": "CA",
+    "zipCode": "94105",
+    "country": "US"
+  },
+  "createdAt": "2026-03-30T10:00:00Z",
+  "updatedAt": "2026-03-30T10:00:00Z"
+}

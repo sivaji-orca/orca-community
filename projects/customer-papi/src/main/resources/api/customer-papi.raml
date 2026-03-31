@@ -1,0 +1,198 @@
+#%RAML 1.0
+title: Customer Process API
+version: v1
+baseUri: http://localhost:8081/api
+mediaType: application/json
+
+types:
+  Customer: !include types/customer.raml
+  CustomerCreate:
+    type: object
+    properties:
+      firstName:
+        type: string
+        minLength: 1
+      lastName:
+        type: string
+        minLength: 1
+      email:
+        type: string
+      phone?: string
+      company?: string
+      status?:
+        type: string
+        enum: [active, inactive, prospect]
+        default: prospect
+      address?:
+        type: object
+        properties:
+          street?: string
+          city?: string
+          state?: string
+          zipCode?: string
+          country?: string
+  CustomerUpdate:
+    type: object
+    properties:
+      firstName?: string
+      lastName?: string
+      email?: string
+      phone?: string
+      company?: string
+      status?:
+        type: string
+        enum: [active, inactive, prospect]
+      address?:
+        type: object
+        properties:
+          street?: string
+          city?: string
+          state?: string
+          zipCode?: string
+          country?: string
+  SyncResult:
+    type: object
+    properties:
+      synced: integer
+      failed: integer
+      direction: string
+      timestamp: datetime
+  ErrorResponse:
+    type: object
+    properties:
+      errorCode: string
+      message: string
+      timestamp: datetime
+
+/customers:
+  get:
+    displayName: List Customers
+    queryParameters:
+      name?: string
+      status?:
+        type: string
+        enum: [active, inactive, prospect]
+      limit?:
+        type: integer
+        default: 25
+      offset?:
+        type: integer
+        default: 0
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include examples/customer-list-response.json
+  post:
+    displayName: Create Customer
+    body:
+      application/json:
+        type: CustomerCreate
+        example: !include examples/customer-create-request.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: Customer
+      400:
+        body:
+          application/json:
+            type: ErrorResponse
+  /{customerId}:
+    get:
+      displayName: Get Customer
+      responses:
+        200:
+          body:
+            application/json:
+              type: Customer
+        404:
+          body:
+            application/json:
+              type: ErrorResponse
+    put:
+      displayName: Update Customer
+      body:
+        application/json:
+          type: CustomerUpdate
+      responses:
+        200:
+          body:
+            application/json:
+              type: Customer
+        404:
+          body:
+            application/json:
+              type: ErrorResponse
+    delete:
+      displayName: Delete Customer
+      responses:
+        204:
+          description: Deleted
+        404:
+          body:
+            application/json:
+              type: ErrorResponse
+
+/sync:
+  /to-salesforce:
+    post:
+      displayName: Sync to Salesforce
+      responses:
+        200:
+          body:
+            application/json:
+              type: SyncResult
+  /from-salesforce:
+    post:
+      displayName: Sync from Salesforce
+      responses:
+        200:
+          body:
+            application/json:
+              type: SyncResult
+  /status:
+    get:
+      displayName: Sync Status
+      responses:
+        200:
+          body:
+            application/json:
+              example:
+                lastSyncToSf: "2026-03-30T00:00:00Z"
+                lastSyncFromSf: "2026-03-30T00:00:00Z"
+                pendingSync: false
+
+/health:
+  get:
+    displayName: Health Check
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              status: UP
+              api: customer-papi
+              version: v1
+              downstream:
+                customerApi: UP
+                salesforceApi: UP
+              timestamp: "2026-03-30T00:00:00Z"
+
+/audit:
+  get:
+    displayName: Audit Trail
+    queryParameters:
+      limit?:
+        type: integer
+        default: 20
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              events:
+                - operation: CREATE
+                  entity: customer
+                  timestamp: "2026-03-30T00:00:00Z"
+                  details: "Created customer Jane Doe"

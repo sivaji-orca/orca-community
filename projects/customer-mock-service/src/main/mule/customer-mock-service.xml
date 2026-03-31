@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+      xmlns:os="http://www.mulesoft.org/schema/mule/os"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+        http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+
+    <configuration-properties file="config-${mule.env}.yaml"/>
+
+    <http:listener-config name="HTTP_Listener_Config">
+        <http:listener-connection host="${http.host}" port="${http.port}"/>
+    </http:listener-config>
+
+    <apikit:config name="APIkit_Config" raml="api/customer-mock-service.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus"/>
+
+    <os:object-store name="Account_Store" persistent="false" entryTtl="365" entryTtlUnit="DAYS" maxEntries="10000"/>
+
+    <flow name="customer-mock-service-main">
+        <http:listener config-ref="HTTP_Listener_Config" path="/api/*"/>
+        <apikit:router config-ref="APIkit_Config"/>
+        <error-handler ref="global-error-handler"/>
+    </flow>
+</mule>

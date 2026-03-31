@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Build output
+projects/*/target/
+backend/dist/
+frontend/dist/
+
+# Runtime
+softwares/
+*.log
+
+# Config with secrets
+config.yaml
+backend/data/vault.enc
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.iml
+.vscode/

@@ -1,0 +1,37 @@
+---
+description: Orca Community project structure and conventions
+globs: ["**/*"]
+---
+
+# Orca Community Project Structure
+
+This is a MuleSoft Developer Productivity Template. It provides a full API-led architecture with a React dashboard for managing MuleSoft APIs with Salesforce integration.
+
+## Directory Layout
+
+- `backend/` -- Express.js backend (Bun runtime, port 3003). Routes in `src/routes/`, services in `src/services/`, SQLite + encrypted vault for data.
+- `frontend/` -- React 19 + Vite + TailwindCSS v4 (port 5173). Tab-based dashboard with pages in `src/pages/`.
+- `projects/` -- MuleSoft API workspaces (each is a Maven project):
+  - `customer-papi/` -- Process API (port 8081) -- client-facing orchestrator with sync logic
+  - `customer-management-api/` -- System API (port 8082) -- CRUD on Object Store
+  - `customer-sf-sapi/` -- System API (port 8083) -- Salesforce connector
+  - `customer-mock-service/` -- Mock (port 8084) -- simulates Salesforce for local dev
+- `softwares/` -- Mule standalone runtime (gitignored, user-provided)
+- `scripts/` -- setup.sh, configure.sh, start.sh, stop.sh
+- `config.template.yaml` -- Template for org-specific configuration
+
+## Key Conventions
+
+- Backend paths: projects live at `../../projects` relative to `backend/src/services/`
+- All MuleSoft APIs use `config-${mule.env}.yaml` for environment-specific properties
+- Secrets are stored in encrypted vault at `backend/data/vault.enc`
+- Frontend uses no URL router; tabs are React state in Dashboard components
+- The frontend proxies `/api` to `http://localhost:3003` in dev mode
+
+## Adding a New MuleSoft API
+
+1. Create a new Maven project under `projects/<api-name>/`
+2. Follow RAML-first design in `src/main/resources/api/`
+3. Use `config-local.yaml` and `config-cloudhub.yaml` for env configs
+4. Add a CloudHub2 profile in `pom.xml` (copy from existing APIs)
+5. Register the project in the dashboard if needed
