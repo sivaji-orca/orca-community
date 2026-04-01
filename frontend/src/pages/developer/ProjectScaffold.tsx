@@ -67,7 +67,7 @@ export function ProjectScaffold() {
           addLog("Committing changes...");
           const data = await api.post<{ message: string; hash: string }>("/git/commit", {
             projectName,
-            message: "Initial commit - hello-world MuleSoft app scaffolded by Dhurandhar",
+            message: "Initial commit - hello-world MuleSoft app scaffolded by Orca",
           });
           addLog(`${data.message} (${data.hash})`);
           markComplete("commit");

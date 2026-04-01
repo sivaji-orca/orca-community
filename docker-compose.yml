@@ -1,0 +1,15 @@
+services:
+  dashboard:
+    build: .
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - JWT_SECRET=orca-community-local-dev-secret-key-2026
+      - VAULT_MASTER_KEY=orca-community-vault-master-key-aes256
+    volumes:
+      - orca-data:/app/backend/data
+    restart: unless-stopped
+
+volumes:
+  orca-data:

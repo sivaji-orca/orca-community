@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "dhurandhar-local-dev-secret-key-2026";
+const JWT_SECRET = process.env.JWT_SECRET || "orca-community-local-dev-secret-key-2026";
 
 export interface AuthPayload {
   userId: number;

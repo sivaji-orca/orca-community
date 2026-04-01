@@ -37,7 +37,7 @@ export function LogViewer() {
     if (streaming && eventSourceRef.current) {
       eventSourceRef.current.close(); eventSourceRef.current = null; setStreaming(false); return;
     }
-    const token = localStorage.getItem("dhurandhar_token");
+    const token = localStorage.getItem("orca_token");
     const es = new EventSource(`/api/logs/stream?token=${token}`);
     es.onmessage = (e) => {
       try {

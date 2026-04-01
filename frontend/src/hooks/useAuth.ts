@@ -8,7 +8,7 @@ export interface User {
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem("dhurandhar_user");
+    const stored = localStorage.getItem("orca_user");
     return stored ? JSON.parse(stored) : null;
   });
 
@@ -25,15 +25,15 @@ export function useAuth() {
     }
 
     const data = await res.json();
-    localStorage.setItem("dhurandhar_token", data.token);
-    localStorage.setItem("dhurandhar_user", JSON.stringify(data.user));
+    localStorage.setItem("orca_token", data.token);
+    localStorage.setItem("orca_user", JSON.stringify(data.user));
     setUser(data.user);
     return data.user;
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem("dhurandhar_token");
-    localStorage.removeItem("dhurandhar_user");
+    localStorage.removeItem("orca_token");
+    localStorage.removeItem("orca_user");
     setUser(null);
   }, []);
 

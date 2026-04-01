@@ -11,7 +11,7 @@ function initDb(): Database {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 
-  const dbPath = path.join(DATA_DIR, "dhurandhar.db");
+  const dbPath = path.join(DATA_DIR, "orca.db");
   const db = new Database(dbPath, { create: true });
 
   db.run("PRAGMA journal_mode = WAL");

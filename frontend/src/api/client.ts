@@ -1,7 +1,7 @@
 const BASE = "/api";
 
 function getToken(): string | null {
-  return localStorage.getItem("dhurandhar_token");
+  return localStorage.getItem("orca_token");
 }
 
 async function request<T>(
@@ -18,8 +18,8 @@ async function request<T>(
   const res = await fetch(`${BASE}${path}`, { ...options, headers });
 
   if (res.status === 401 || res.status === 403) {
-    localStorage.removeItem("dhurandhar_token");
-    localStorage.removeItem("dhurandhar_user");
+    localStorage.removeItem("orca_token");
+    localStorage.removeItem("orca_user");
     window.location.href = "/";
     throw new Error("Session expired");
   }

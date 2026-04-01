@@ -48,5 +48,5 @@ app.get("/{*splat}", (_req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Dhurandhar-2 running at http://localhost:${PORT}`);
+  console.log(`Orca Community Edition running at http://localhost:${PORT}`);
 });

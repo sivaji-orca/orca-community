@@ -7,7 +7,7 @@ const VAULT_PATH = path.join(DATA_DIR, "vault.enc");
 const ALGORITHM = "aes-256-gcm";
 
 function getMasterKey(): Buffer {
-  const key = process.env.VAULT_MASTER_KEY || "dhurandhar-vault-master-key-aes256";
+  const key = process.env.VAULT_MASTER_KEY || "orca-community-vault-master-key-aes256";
   return crypto.createHash("sha256").update(key).digest();
 }
 

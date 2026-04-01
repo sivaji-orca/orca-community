@@ -1,0 +1,13 @@
+node_modules
+backend/node_modules
+frontend/node_modules
+frontend/dist
+softwares
+projects/*/target
+.git
+.github
+*.log
+.DS_Store
+config.yaml
+backend/data/vault.enc
+backend/data/orca.db

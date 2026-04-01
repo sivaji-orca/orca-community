@@ -97,7 +97,7 @@ export async function getOrCreateWorkspace(): Promise<{ workspaceId: string; wor
   const listResp = await postmanFetch("/workspaces");
   if (!listResp.ok) throw new Error(`Failed to list workspaces: ${listResp.status} ${await listResp.text()}`);
   const listData = (await listResp.json()) as any;
-  const found = (listData.workspaces || []).find((w: any) => w.name === "Dhurandhar");
+  const found = (listData.workspaces || []).find((w: any) => w.name === "Orca");
   if (found) {
     const config = { workspaceId: found.id, workspaceName: found.name };
     saveWorkspaceConfig(config);
@@ -107,7 +107,7 @@ export async function getOrCreateWorkspace(): Promise<{ workspaceId: string; wor
   const createResp = await postmanFetch("/workspaces", {
     method: "POST",
     body: JSON.stringify({
-      workspace: { name: "Dhurandhar", type: "personal", description: "MuleSoft API collections managed by Dhurandhar" },
+      workspace: { name: "Orca", type: "personal", description: "MuleSoft API collections managed by Orca" },
     }),
   });
   if (!createResp.ok) throw new Error(`Failed to create workspace: ${createResp.status} ${await createResp.text()}`);

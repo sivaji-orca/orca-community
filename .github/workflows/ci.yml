@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: backend
+        run: bun install
+
+      - name: Run tests
+        working-directory: backend
+        run: bun test
+
+  frontend:
+    name: Frontend Lint, Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install
+
+      - name: Lint
+        working-directory: frontend
+        run: bun run lint
+
+      - name: Type check
+        working-directory: frontend
+        run: bunx tsc -b --noEmit
+
+      - name: Run tests
+        working-directory: frontend
+        run: bun run test
+
+      - name: Build
+        working-directory: frontend
+        run: bun run build

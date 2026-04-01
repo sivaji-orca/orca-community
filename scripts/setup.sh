@@ -30,13 +30,19 @@ check_prereq bun "Bun (JavaScript runtime)"
 check_prereq mvn "Maven (build tool)"
 check_prereq java "Java"
 check_prereq git "Git"
-check_prereq sf "Salesforce CLI"
 echo ""
 
 if [ "$MISSING" -eq 1 ]; then
   echo "  Some prerequisites are missing. Install them and re-run this script."
   echo "  See README.md > Prerequisites for install links."
   exit 1
+fi
+
+echo "  Optional tools:"
+if command -v sf &>/dev/null; then
+  echo "  [OK] Salesforce CLI found: $(sf --version 2>/dev/null | head -1)"
+else
+  echo "  [INFO] Salesforce CLI not found (optional — needed only for SF org management)"
 fi
 
 # Java version check
@@ -80,8 +86,8 @@ cd "$ROOT_DIR/frontend" && bun install --silent
 echo "  [OK] Frontend dependencies installed"
 echo ""
 
-# --- 4. Create config.yaml from template ---
-echo "Step 4/5: Configuration file..."
+# --- 4. Create config files and seed database ---
+echo "Step 4/5: Configuration files and database..."
 echo ""
 
 if [ ! -f "$ROOT_DIR/config.yaml" ]; then
@@ -92,6 +98,16 @@ if [ ! -f "$ROOT_DIR/config.yaml" ]; then
 else
   echo "  [OK] config.yaml already exists"
 fi
+
+if [ ! -f "$ROOT_DIR/backend/.env" ]; then
+  cp "$ROOT_DIR/backend/.env.example" "$ROOT_DIR/backend/.env"
+  echo "  [OK] backend/.env created from template"
+else
+  echo "  [OK] backend/.env already exists"
+fi
+
+echo "  Seeding default users..."
+cd "$ROOT_DIR/backend" && bun src/db/seed.ts 2>/dev/null || echo "  [INFO] Seed skipped (may already be seeded)"
 echo ""
 
 # --- 5. Download Mule Runtime (auto via Maven) ---

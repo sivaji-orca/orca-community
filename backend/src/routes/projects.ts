@@ -99,7 +99,7 @@ baseUri: http://localhost:8081/api
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.nandutech</groupId>
+    <groupId>com.orcaesb</groupId>
     <artifactId>${projectName}</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>mule-application</packaging>
@@ -153,7 +153,7 @@ baseUri: http://localhost:8081/api
 
     fs.writeFileSync(path.join(projectPath, ".gitignore"), `target/\n.mule/\n*.jar\n*.class\n.DS_Store\n__pycache__/\n.pytest_cache/\n`);
     fs.writeFileSync(path.join(projectPath, "README.md"),
-`# ${projectName}\n\nA MuleSoft application scaffolded by Dhurandhar.\n\n## API Endpoints\n\n- \`GET /api/hello\` - Returns a hello world message\n\n## NanduTech Services\n`);
+`# ${projectName}\n\nA MuleSoft application scaffolded by Orca Community Edition.\n\n## API Endpoints\n\n- \`GET /api/hello\` - Returns a hello world message\n\n## Orca Community Edition\n`);
 
     fs.writeFileSync(path.join(testsDir, `test_hello.py`),
 `import requests

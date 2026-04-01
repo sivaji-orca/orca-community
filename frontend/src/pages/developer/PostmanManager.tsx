@@ -83,7 +83,7 @@ export function PostmanManager() {
                 </span>
               </div>
             ) : (
-              <p className="text-sm text-slate-500">No workspace connected. Connect to create a "Dhurandhar" workspace in your Postman account.</p>
+              <p className="text-sm text-slate-500">No workspace connected. Connect to create a "Orca" workspace in your Postman account.</p>
             )}
           </div>
           {!workspace?.connected && (
@@ -174,7 +174,7 @@ export function PostmanManager() {
 
       <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
         <p className="text-xs text-amber-700">
-          Collections synced here appear in your Postman desktop app under the <strong>Dhurandhar</strong> workspace.
+          Collections synced here appear in your Postman desktop app under the <strong>Orca</strong> workspace.
           Open Postman to run requests, add tests, and collaborate with your team.
         </p>
       </div>

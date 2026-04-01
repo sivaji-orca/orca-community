@@ -40,10 +40,28 @@ interface ApiCardState {
   runtimeLine: string | null;
 }
 
-interface ActivityItem {
-  id: string;
-  label: string;
-  time: string;
+interface AnalyticsSummary {
+  totalRequests: number;
+  errorCount: number;
+  successRate: number;
+  avgResponseTime: number;
+}
+
+interface LogEntry {
+  timestamp: string;
+  level: string;
+  logger: string;
+  message: string;
+  source: "mule" | "wiremock";
+}
+
+interface LogStats {
+  total: number;
+  error: number;
+  warn: number;
+  info: number;
+  debug: number;
+  lastError: string | null;
 }
 
 function statusDotClass(kind: "up" | "down" | "unknown"): string {
@@ -125,18 +143,6 @@ function buildApiStates(
   return next;
 }
 
-const PLACEHOLDER_ACTIVITY: ActivityItem[] = [
-  {
-    id: "a1",
-    label: "Audit feed not connected — deployment and API events will show here when the audit API is available.",
-    time: "—",
-  },
-  {
-    id: "a2",
-    label: "Tip: Use Workstation to start Mule and verify health checks on each listener port.",
-    time: "—",
-  },
-];
 
 export function Overview() {
   const [loading, setLoading] = useState(true);
@@ -153,6 +159,10 @@ export function Overview() {
   const [cloudApps, setCloudApps] = useState<CloudHubApp[]>([]);
   const [cloudError, setCloudError] = useState("");
 
+  const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
+  const [logStats, setLogStats] = useState<LogStats | null>(null);
+  const [recentLogs, setRecentLogs] = useState<LogEntry[]>([]);
+
   const loadOverview = useCallback(async () => {
     setLoading(true);
     setPageError("");
@@ -163,10 +173,13 @@ export function Overview() {
     let services: ServiceInfo[] = [];
 
     try {
-      const [runtimeResult, cloudResult, sfResult, ...healthOutcomes] = await Promise.allSettled([
+      const [runtimeResult, cloudResult, sfResult, analyticsResult, logStatsResult, recentLogsResult, ...healthOutcomes] = await Promise.allSettled([
         api.get<ServiceInfo[]>("/runtime/status"),
         api.get<CloudHubApp[]>("/anypoint/applications"),
         api.get<SalesforceHealthResponse>("/salesforce/health"),
+        api.get<AnalyticsSummary>("/analytics/summary?hours=24"),
+        api.get<LogStats>("/logs/stats"),
+        api.get<LogEntry[]>("/logs?limit=10&level=ERROR,WARN"),
         ...API_DEFINITIONS.map((d) => probeDirectHealth(d.port)),
       ]);
 
@@ -202,6 +215,24 @@ export function Overview() {
             ? sfResult.reason.message
             : "Salesforce health unavailable"
         );
+      }
+
+      if (analyticsResult.status === "fulfilled") {
+        setAnalyticsSummary(analyticsResult.value);
+      } else {
+        setAnalyticsSummary(null);
+      }
+
+      if (logStatsResult.status === "fulfilled") {
+        setLogStats(logStatsResult.value);
+      } else {
+        setLogStats(null);
+      }
+
+      if (recentLogsResult.status === "fulfilled") {
+        setRecentLogs(recentLogsResult.value);
+      } else {
+        setRecentLogs([]);
       }
 
       const healthByPort: Record<number, DirectHealth> = {};
@@ -240,7 +271,7 @@ export function Overview() {
         <header className="flex flex-col gap-4 border-b border-indigo-100/80 pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
-              Dhurandhar-2 · Developer
+              Orca Community · Developer
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Overview
@@ -443,24 +474,81 @@ export function Overview() {
           </div>
         </section>
 
-        <section
-          aria-labelledby="activity-heading"
-          className="rounded-xl border border-slate-200/90 bg-white p-6 shadow-md shadow-slate-200/50"
-        >
-          <h2 id="activity-heading" className="text-lg font-semibold text-slate-900">
-            Recent activity
+        <section aria-labelledby="metrics-heading">
+          <h2 id="metrics-heading" className="mb-4 text-lg font-semibold text-slate-900">
+            API Metrics (last 24h)
           </h2>
-          <ul className="mt-4 space-y-3">
-            {PLACEHOLDER_ACTIVITY.map((item) => (
-              <li
-                key={item.id}
-                className="flex gap-3 rounded-lg border border-slate-100 bg-slate-50/60 px-4 py-3 text-sm text-slate-600"
-              >
-                <time className="shrink-0 font-mono text-xs text-slate-400">{item.time}</time>
-                <span>{item.label}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-md shadow-slate-200/50">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Total Requests</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{analyticsSummary?.totalRequests ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-md shadow-slate-200/50">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Success Rate</p>
+              <p className="mt-1 text-2xl font-bold text-emerald-600">{analyticsSummary ? `${analyticsSummary.successRate.toFixed(1)}%` : "—"}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-md shadow-slate-200/50">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Errors</p>
+              <p className="mt-1 text-2xl font-bold text-red-600">{analyticsSummary?.errorCount ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-md shadow-slate-200/50">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Avg Response Time</p>
+              <p className="mt-1 text-2xl font-bold text-indigo-600">{analyticsSummary ? `${analyticsSummary.avgResponseTime.toFixed(0)}ms` : "—"}</p>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="log-heading">
+          <h2 id="log-heading" className="mb-4 text-lg font-semibold text-slate-900">
+            Runtime Log Summary
+          </h2>
+          <div className="rounded-xl border border-slate-200/90 bg-white p-6 shadow-md shadow-slate-200/50">
+            {logStats ? (
+              <div className="grid gap-4 sm:grid-cols-5 mb-6">
+                <div className="text-center">
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Total</p>
+                  <p className="mt-1 text-xl font-bold text-slate-900">{logStats.total}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-medium uppercase tracking-wider text-red-500">Errors</p>
+                  <p className="mt-1 text-xl font-bold text-red-600">{logStats.error}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-medium uppercase tracking-wider text-amber-500">Warnings</p>
+                  <p className="mt-1 text-xl font-bold text-amber-600">{logStats.warn}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-medium uppercase tracking-wider text-emerald-500">Info</p>
+                  <p className="mt-1 text-xl font-bold text-emerald-600">{logStats.info}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-medium uppercase tracking-wider text-blue-500">Debug</p>
+                  <p className="mt-1 text-xl font-bold text-blue-600">{logStats.debug}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">Log statistics unavailable. Start Mule Runtime to see log data.</p>
+            )}
+
+            {recentLogs.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Recent Errors &amp; Warnings</h3>
+                <div className="bg-slate-900 rounded-lg p-4 max-h-48 overflow-y-auto space-y-1">
+                  {recentLogs.map((entry, i) => (
+                    <p key={i} className={`font-mono text-xs ${entry.level === "ERROR" ? "text-red-400" : "text-amber-400"}`}>
+                      <span className="text-slate-500">{entry.timestamp}</span>{" "}
+                      <span className="font-semibold">[{entry.level}]</span>{" "}
+                      {entry.message.slice(0, 200)}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {recentLogs.length === 0 && logStats && (
+              <p className="text-sm text-emerald-600">No recent errors or warnings detected.</p>
+            )}
+          </div>
         </section>
           </>
         ) : null}

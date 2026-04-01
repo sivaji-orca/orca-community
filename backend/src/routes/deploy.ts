@@ -92,7 +92,7 @@ router.post("/cloudhub", async (req: Request, res: Response): Promise<void> => {
 
     const jarPath = buildMuleJar(projectPath);
 
-    const appDomain = domain || `dhurandhar-${projectName}`;
+    const appDomain = domain || `orca-${projectName}`;
 
     const result = await deployToCloudHub({
       jarPath,

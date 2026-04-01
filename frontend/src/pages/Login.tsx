@@ -29,11 +29,11 @@ export function Login({ onLogin }: LoginProps) {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
-            <span className="text-white font-bold text-2xl">D</span>
+            <span className="text-white font-bold text-2xl">O</span>
           </div>
-          <h1 className="text-3xl font-bold text-slate-800">Dhurandhar</h1>
+          <h1 className="text-3xl font-bold text-slate-800">Orca</h1>
           <p className="text-slate-500 mt-1">MuleSoft Developer Productivity Tool</p>
-          <p className="text-xs text-slate-400 mt-1">NanduTech Services</p>
+          <p className="text-xs text-slate-400 mt-1">Community Edition</p>
         </div>
 
         {!selectedRole ? (

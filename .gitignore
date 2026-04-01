@@ -14,7 +14,15 @@ softwares/
 
 # Config with secrets
 config.yaml
+backend/.env
 backend/data/vault.enc
+
+# Generated data (recreated by seed/runtime)
+backend/data/*.db
+backend/data/*.db-shm
+backend/data/*.db-wal
+backend/data/postman-sync.json
+backend/data/postman-environments.json
 
 # OS
 .DS_Store

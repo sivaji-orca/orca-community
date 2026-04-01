@@ -1,5 +1,9 @@
 # Orca Community Edition
 
+[![CI](https://github.com/sivaji-orca/orca-community/actions/workflows/ci.yml/badge.svg)](https://github.com/sivaji-orca/orca-community/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.0-green.svg)](CHANGELOG.md)
+
 **Open-source MuleSoft Developer Productivity Tool** — a cloneable Git repository that any MuleSoft team can fork, configure, and run alongside Cursor IDE for end-to-end API lifecycle management.
 
 > Part of the [Orca](https://orcaesb.com) product family. Looking for team collaboration, cloud dashboards, and managed Anypoint/Salesforce integrations? Check out [Orca Cloud](https://orcaesb.com/pricing).
@@ -26,7 +30,7 @@
 git clone https://github.com/sivaji-orca/orca-community.git
 cd orca-community
 
-# 2. Run setup (checks prereqs, installs deps, downloads Mule runtime)
+# 2. Run setup (checks prereqs, installs deps, seeds database)
 chmod +x scripts/*.sh
 ./scripts/setup.sh
 
@@ -45,6 +49,22 @@ cp config.template.yaml config.yaml
 open http://localhost:5173
 ```
 
+**Default login credentials:**
+
+| Role | Username | Password |
+|------|----------|----------|
+| Administrator | `admin` | `admin` |
+| Developer | `developer` | `developer` |
+
+### Docker Quick Start
+
+If you prefer Docker (dashboard only, without Mule Runtime):
+
+```bash
+docker-compose up --build
+open http://localhost:3003
+```
+
 ---
 
 ## Prerequisites
@@ -58,7 +78,7 @@ open http://localhost:5173
 | Salesforce CLI | latest | SF org management (optional) |
 | Cursor IDE | latest | AI-powered development (recommended) |
 
-See [detailed installation instructions](docs/PREREQUISITES.md) for each tool.
+See [detailed installation instructions](docs/PREREQUISITES.md) for each tool. Having issues? Check the [Troubleshooting Guide](docs/TROUBLESHOOTING.md).
 
 ---
 
@@ -116,6 +136,18 @@ Your rule content here.
 
 ---
 
+## Running Tests
+
+```bash
+# Backend tests (Bun)
+cd backend && bun test
+
+# Frontend tests (Vitest)
+cd frontend && bun run test
+```
+
+---
+
 ## Upgrade to Orca Cloud
 
 Need team collaboration, centralized dashboards, or managed integrations?
@@ -132,8 +164,11 @@ Contact **sales@orcaesb.com** to discuss your needs.
 ```
 orca-community/
 ├── .cursor/rules/          # Cursor AI context rules
+├── .github/workflows/      # CI/CD pipeline
 ├── backend/                # Express.js dashboard API (port 3003)
+│   └── src/__tests__/      # Backend unit tests (Bun)
 ├── frontend/               # React dashboard UI (port 5173)
+│   └── src/__tests__/      # Frontend component tests (Vitest)
 ├── projects/               # MuleSoft API workspaces
 │   ├── customer-papi/
 │   ├── customer-management-api/
@@ -141,8 +176,11 @@ orca-community/
 │   └── customer-mock-service/
 ├── softwares/              # Mule runtime (auto-downloaded)
 ├── scripts/                # Setup, configure, build, start, stop
-├── docs/                   # Additional documentation
+├── docs/                   # Prerequisites, troubleshooting
 ├── config.template.yaml    # Template (checked into Git)
+├── Dockerfile              # Container build
+├── docker-compose.yml      # Container orchestration
+├── CHANGELOG.md            # Version history
 └── README.md               # This file
 ```
 
