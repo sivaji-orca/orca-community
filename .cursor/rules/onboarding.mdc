@@ -1,0 +1,87 @@
+---
+description: Interactive onboarding guide for new Orca Community Edition developers
+alwaysApply: true
+---
+
+# Orca Community Edition — Developer Onboarding
+
+When a user asks for help setting up, getting started, or onboarding, follow this step-by-step guide. Run each check command, report the result, and only move to the next step when the current one passes. If something is missing, provide the install command for their OS.
+
+## Step 1: Check Prerequisites
+
+Run these commands one by one and report results:
+
+```
+git --version          # Need: any version
+java -version          # Need: 17+
+mvn -version           # Need: 3.8+
+bun --version          # Need: any version
+```
+
+If anything is missing, check the OS (`uname -s`) and suggest the correct install:
+- **macOS**: `brew install git`, `brew install openjdk@17`, `brew install maven`, `curl -fsSL https://bun.sh/install | bash`
+- **Linux**: `sudo apt install git openjdk-17-jdk maven` then Bun via curl
+- **Windows/WSL**: same as Linux inside WSL
+
+For Java, also verify JAVA_HOME is set: `echo $JAVA_HOME`. If empty, suggest adding to shell profile.
+
+Do NOT proceed until all 4 tools are confirmed installed.
+
+## Step 2: Run Setup Script
+
+```bash
+chmod +x scripts/*.sh
+./scripts/setup.sh
+```
+
+This installs backend/frontend dependencies, creates config.yaml and .env, and seeds the database with default users (admin/admin, developer/developer).
+
+Watch for errors. Common issues:
+- `bun: command not found` → Bun not in PATH. Run: `export BUN_INSTALL="$HOME/.bun" && export PATH="$BUN_INSTALL/bin:$PATH"` then retry.
+- Java version warning → Need Java 17+. Check `java -version`.
+
+## Step 3: Configure Credentials
+
+Ask the user: "Do you have MuleSoft Anypoint Platform credentials (client_id, client_secret)?"
+
+- **If yes**: Guide them to edit `config.yaml` with their credentials, then run `./scripts/configure.sh`
+- **If no**: They can still use the dashboard and mock services without Anypoint credentials. Skip configure.sh for now.
+
+## Step 4: Build MuleSoft APIs (optional)
+
+Only if they completed Step 3 with Anypoint credentials:
+
+```bash
+./scripts/build-all.sh
+```
+
+This builds all 4 sample Mule API projects with Maven. Takes 2-5 minutes on first run.
+
+## Step 5: Start Everything
+
+```bash
+./scripts/start.sh
+```
+
+This starts the Mule Runtime (if available) and the dashboard (backend on port 3003, frontend on port 5173).
+
+Verify by opening: http://localhost:5173
+
+Default credentials:
+- Admin: `admin` / `admin`
+- Developer: `developer` / `developer`
+
+## Step 6: Verify Dashboard
+
+After login, confirm the user can see the dashboard tabs: Overview, API Design, Projects, New Project, Deploy, Monitoring, Logs, Analytics, Postman, Git, Settings.
+
+## Stopping
+
+To stop all services: `./scripts/stop.sh`
+
+## Troubleshooting
+
+If anything fails, check `docs/TROUBLESHOOTING.md` in this repo for common fixes. Key issues:
+- Port 3003/5173 already in use → kill existing processes
+- Maven build fails → check `~/.m2/settings.xml` has Anypoint Exchange credentials
+- Database errors → delete `backend/data/orca.db` and re-run `./scripts/setup.sh`
