@@ -1,0 +1,143 @@
+---
+description: Guide contributors through the fork, branch, code, test, and PR workflow for Orca Community Edition
+globs: ["**"]
+---
+
+# Orca Community Edition — Contributor Workflow Guide
+
+When a user says they want to contribute, submit a fix, open a PR, or improve something, guide them through this workflow step by step.
+
+## Step 1: Determine the Contribution Type
+
+Ask what they want to contribute:
+
+| Type | Branch prefix | Example |
+|------|--------------|---------|
+| Bug fix | `fix/` | `fix/port-conflict-on-startup` |
+| Feature | `feature/` | `feature/api-response-time-chart` |
+| Documentation | `docs/` | `docs/windows-setup-instructions` |
+| DX improvement | `dx/` | `dx/better-java-version-error` |
+| Refactor | `refactor/` | `refactor/health-check-consolidation` |
+| Test | `test/` | `test/deploy-endpoint-integration` |
+
+## Step 2: Verify They're on a Fork
+
+Check if the remote points to their fork (not the upstream repo):
+
+```bash
+git remote -v
+```
+
+- If `origin` points to `sivaji-orca/orca-community`, they need to fork first:
+  1. Go to https://github.com/sivaji-orca/orca-community and click "Fork"
+  2. Then update their remote:
+     ```bash
+     git remote set-url origin https://github.com/<their-username>/orca-community.git
+     git remote add upstream https://github.com/sivaji-orca/orca-community.git
+     ```
+
+- If `origin` points to their fork, they're good. Verify `upstream` is set:
+  ```bash
+  git remote add upstream https://github.com/sivaji-orca/orca-community.git 2>/dev/null || true
+  ```
+
+## Step 3: Create a Branch
+
+Sync with upstream first, then create a branch:
+
+```bash
+git fetch upstream
+git checkout main
+git rebase upstream/main
+git checkout -b <prefix>/<descriptive-name>
+```
+
+Use the branch prefix from Step 1.
+
+## Step 4: Guide the Changes
+
+Based on the contribution type, point them to the right files:
+
+- **Backend code**: `backend/src/` — Express.js routes and services
+- **Frontend code**: `frontend/src/` — React components and pages
+- **MuleSoft projects**: `projects/` — Mule XML flows and RAML specs
+- **Documentation**: `docs/` and root `.md` files
+- **Scripts**: `scripts/` — bash scripts with `set -euo pipefail`
+- **Cursor rules**: `.cursor/rules/` — `.mdc` files for AI guidance
+- **Tests**: `backend/src/__tests__/` (Bun) and `frontend/src/__tests__/` (Vitest)
+
+Remind them of code guidelines:
+- Backend: `async/await`, consistent JSON responses `{ success, data/error }`
+- Frontend: functional components, hooks, shadcn/ui components
+- Scripts: `#!/usr/bin/env bash`, `set -euo pipefail`, colored output helpers
+
+## Step 5: Run Tests
+
+Before committing, ensure all checks pass:
+
+```bash
+# Backend tests
+cd backend && bun test
+
+# Frontend tests
+cd frontend && bun run test
+
+# Frontend lint
+cd frontend && bun run lint
+```
+
+If tests fail, help them debug. If they've added a new endpoint or component, remind them to add tests.
+
+## Step 6: Commit with Conventional Commits
+
+Guide them to commit with the right format:
+
+```
+<type>(<scope>): <short description>
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `dx`
+Scopes: `backend`, `frontend`, `scripts`, `deploy`, `postman`, `git`, `docs`, `ci`
+
+Example:
+```bash
+git add -A
+git commit -m "fix(backend): resolve port 3003 conflict when process already running"
+```
+
+## Step 7: Push and Create PR
+
+```bash
+git push origin <branch-name>
+```
+
+Then guide them to create a PR on GitHub:
+1. Go to their fork on GitHub — there should be a banner to create a PR
+2. Target: `sivaji-orca/orca-community` `main` branch
+3. Fill out the PR template (type of change, changes, how to test, checklist)
+4. Link any related issues with `Closes #<number>`
+
+Or use the GitHub CLI:
+```bash
+gh pr create --repo sivaji-orca/orca-community --title "<type>(<scope>): description" --body "## Summary\n\n..."
+```
+
+## Step 8: After Submitting
+
+Let them know:
+- CI will run automatically (backend tests, frontend lint/build/tests)
+- A maintainer will review within 48 hours
+- They may get feedback — push new commits to the same branch to update the PR
+- Don't force-push during review
+
+## Opening an Issue Instead
+
+If the contributor wants to report a roadblock or suggest an improvement without coding:
+
+1. Go to https://github.com/sivaji-orca/orca-community/issues/new/choose
+2. Pick the right template:
+   - **Bug Report** — something is broken
+   - **Feature Request** — an idea for a new feature
+   - **Documentation & DX Improvement** — confusing steps, missing docs, unclear errors
+3. Fill out the template thoroughly
+4. Or use GitHub Discussions for open-ended feedback: https://github.com/sivaji-orca/orca-community/discussions

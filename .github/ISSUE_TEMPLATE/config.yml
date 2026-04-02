@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a Question
+    url: https://github.com/sivaji-orca/orca-community/discussions/categories/q-a
+    about: Ask questions and get help from the community
+  - name: Share an Idea
+    url: https://github.com/sivaji-orca/orca-community/discussions/categories/ideas
+    about: Suggest ideas for future versions of Orca Community Edition
+  - name: Show & Tell
+    url: https://github.com/sivaji-orca/orca-community/discussions/categories/show-and-tell
+    about: Share what you've built with Orca Community Edition

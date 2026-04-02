@@ -186,14 +186,26 @@ orca-community/
 
 ---
 
+## Community & Contributing
+
+We welcome contributions of all kinds -- bug fixes, features, documentation improvements, and DX feedback.
+
+| Resource | Description |
+|----------|-------------|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Full contribution guide (fork, branch, PR workflow) |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
+| [SECURITY.md](SECURITY.md) | How to report vulnerabilities |
+| [GitHub Issues](https://github.com/sivaji-orca/orca-community/issues) | Bug reports, feature requests, DX feedback |
+| [GitHub Discussions](https://github.com/sivaji-orca/orca-community/discussions) | Questions, ideas, show & tell |
+
+First time contributing? Check out the issue templates -- especially **Documentation & DX Improvement** for sharing roadblocks you hit during setup.
+
+---
+
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE) for details.
 
-## Contributing
-
-Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.
-
 ---
 
-Built with ❤️ by [Orca](https://orcaesb.com)
+Built with care by [Orca](https://orcaesb.com)

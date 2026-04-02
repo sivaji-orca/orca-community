@@ -1,0 +1,21 @@
+# Default owner for everything
+* @sivaji-orca
+
+# Backend
+/backend/ @sivaji-orca
+
+# Frontend
+/frontend/ @sivaji-orca
+
+# Scripts and DevOps
+/scripts/ @sivaji-orca
+/Dockerfile @sivaji-orca
+/docker-compose.yml @sivaji-orca
+/.github/workflows/ @sivaji-orca
+
+# Documentation
+*.md @sivaji-orca
+/docs/ @sivaji-orca
+
+# Cursor AI rules
+/.cursor/rules/ @sivaji-orca
