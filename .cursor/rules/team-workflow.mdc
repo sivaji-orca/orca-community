@@ -1,0 +1,157 @@
+---
+description: Guide team contributors through the two-stage PR workflow (dev branch to main)
+globs: ["**"]
+---
+
+# Orca Community Edition — Team Workflow Guide
+
+When a team member wants to submit work, push changes, create a PR, or merge to main, guide them through the correct workflow based on their role.
+
+## Step 1: Identify the Team Member
+
+Ask who they are or check git config:
+
+```bash
+git config user.name
+git remote -v
+```
+
+| Member | Role | Branch | Workflow |
+|--------|------|--------|----------|
+| Sivaji (@sivaji-orca) | Owner | dev/sivaji | Push directly to dev/sivaji, PR to main |
+| Sathish (@sathish-aidev) | Contributor | dev/sathish | Fork-based, PR to dev/sathish |
+| Rajiv (TBD) | Contributor | dev/rajiv | Fork-based, PR to dev/rajiv |
+
+If `origin` points to `sivaji-orca/orca-community`, they're the owner.
+If `origin` points to a fork, they're a contributor.
+
+## Step 2: For the Owner (Sivaji)
+
+### Submitting work to dev/sivaji
+
+```bash
+# Make sure you're on dev/sivaji
+git checkout dev/sivaji
+
+# If working on a feature branch, merge it
+git merge feature/your-feature
+git push origin dev/sivaji
+```
+
+### Merging dev/sivaji to main
+
+```bash
+# Create a PR from dev/sivaji to main
+gh pr create --base main --head dev/sivaji --title "feat: description of changes"
+
+# Or via GitHub UI:
+# 1. Go to https://github.com/sivaji-orca/orca-community/compare/main...dev/sivaji
+# 2. Create PR, wait for CI, merge
+```
+
+### Reviewing contributor PRs
+
+```bash
+# List open PRs
+gh pr list
+
+# Review a specific PR
+gh pr view <number>
+gh pr review <number> --approve
+gh pr merge <number> --squash
+```
+
+### Syncing dev branches after merging to main
+
+After merging any dev branch to main, sync all dev branches:
+
+```bash
+git checkout main && git pull
+git checkout dev/sivaji && git rebase main && git push origin dev/sivaji --force-with-lease
+git checkout dev/sathish && git rebase main && git push origin dev/sathish --force-with-lease
+git checkout dev/rajiv && git rebase main && git push origin dev/rajiv --force-with-lease
+```
+
+## Step 3: For Contributors (Sathish, Rajiv)
+
+### Verify fork setup
+
+```bash
+# Check remotes
+git remote -v
+# origin should point to YOUR fork
+# upstream should point to sivaji-orca/orca-community
+
+# If upstream is missing:
+git remote add upstream https://github.com/sivaji-orca/orca-community.git
+```
+
+### Creating a feature branch
+
+```bash
+# Sync your dev branch first
+git checkout dev/<your-name>
+git fetch upstream
+git rebase upstream/dev/<your-name>
+
+# Create feature branch
+git checkout -b fix/descriptive-name
+```
+
+Branch naming: `fix/`, `feature/`, `docs/`, `dx/`, `refactor/`, `test/`
+
+### Submitting a PR
+
+```bash
+# Test everything first
+cd backend && bun test
+cd ../frontend && bun run test && bun run lint
+
+# Commit with conventional format
+git add -A
+git commit -m "fix(backend): resolve port 3003 conflict"
+
+# Push to your fork
+git push origin fix/descriptive-name
+```
+
+Then create a PR:
+- **Base repo**: `sivaji-orca/orca-community`
+- **Base branch**: `dev/<your-name>` (NOT main!)
+- **Head**: your fork's feature branch
+
+Or via CLI:
+```bash
+gh pr create --repo sivaji-orca/orca-community --base dev/<your-name> --head <your-username>:fix/descriptive-name
+```
+
+### Important: PR goes to your dev branch, NOT main
+
+Contributors should NEVER PR directly to `main`. Always target your `dev/<name>` branch. The owner will merge dev to main when a batch of work is ready.
+
+## Step 4: After PR is Merged
+
+### Clean up
+
+```bash
+# Delete the feature branch locally
+git checkout dev/<your-name>
+git branch -d fix/descriptive-name
+
+# Delete from your fork
+git push origin --delete fix/descriptive-name
+
+# Sync your dev branch
+git fetch upstream
+git rebase upstream/dev/<your-name>
+```
+
+## Quick Reference
+
+| Action | Owner (Sivaji) | Contributor (Sathish/Rajiv) |
+|--------|---------------|----------------------------|
+| Work on | `dev/sivaji` | Fork + feature branches |
+| PR target | `main` | `dev/<name>` |
+| Review PRs | Yes (all) | No (only own work) |
+| Merge to main | Yes | No (owner does this) |
+| Sync after merge | Rebase all dev branches | `git fetch upstream && git rebase` |

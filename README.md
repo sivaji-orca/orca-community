@@ -193,6 +193,7 @@ We welcome contributions of all kinds -- bug fixes, features, documentation impr
 | Resource | Description |
 |----------|-------------|
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Full contribution guide (fork, branch, PR workflow) |
+| [Team Workflow](docs/TEAM_WORKFLOW.md) | Branching model and merge pipeline for core team |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
 | [SECURITY.md](SECURITY.md) | How to report vulnerabilities |
 | [GitHub Issues](https://github.com/sivaji-orca/orca-community/issues) | Bug reports, feature requests, DX feedback |

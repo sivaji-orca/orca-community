@@ -99,12 +99,16 @@ All checks must pass before submitting a PR. The CI pipeline runs these automati
 
 ## Development Workflow
 
+### Community Contributors
+
+If you're contributing from the community (not a core team member), fork and PR directly to `main`:
+
 ```
 main (protected)
  │
- ├── feature/new-deploy-status    ← your feature branch
- ├── fix/port-conflict            ← your bug fix branch
- └── docs/windows-setup           ← your docs branch
+ ├── feature/new-deploy-status    ← your feature branch (in your fork)
+ ├── fix/port-conflict            ← your bug fix branch (in your fork)
+ └── docs/windows-setup           ← your docs branch (in your fork)
 ```
 
 1. Always branch from the latest `main`
@@ -115,6 +119,22 @@ main (protected)
 git fetch upstream
 git rebase upstream/main
 ```
+
+### Team Contributors (Sivaji, Sathish, Rajiv)
+
+Core team members use a two-stage PR flow through dedicated `dev/<name>` branches. See [docs/TEAM_WORKFLOW.md](docs/TEAM_WORKFLOW.md) for the full guide.
+
+```
+main (protected, production)
+ ├── dev/sivaji       ← owner's working branch
+ ├── dev/sathish      ← Sathish's integration branch
+ └── dev/rajiv        ← Rajiv's integration branch
+```
+
+1. Fork the repo (Sathish and Rajiv) or work directly (Sivaji)
+2. Create feature branches from your `dev/<name>` branch
+3. PR your feature branch to your `dev/<name>` branch in upstream
+4. Owner reviews and merges `dev/<name>` to `main` when ready
 
 ---
 
@@ -146,7 +166,10 @@ test(backend): add health endpoint integration tests
 
 ## Pull Request Process
 
-1. **Open a PR** against `main` with a clear title following the commit convention
+**Community contributors:** Open a PR against `main`.
+**Team contributors:** Open a PR against your `dev/<name>` branch (the owner merges dev to main).
+
+1. **Open a PR** with a clear title following the commit convention
 2. **Fill out the PR template** -- describe what changed, how to test, and link related issues
 3. **CI must pass** -- backend tests, frontend tests, lint, and build
 4. **A maintainer will review** within 48 hours

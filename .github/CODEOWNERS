@@ -2,10 +2,10 @@
 * @sivaji-orca
 
 # Backend
-/backend/ @sivaji-orca
+/backend/ @sivaji-orca @sathish-aidev
 
 # Frontend
-/frontend/ @sivaji-orca
+/frontend/ @sivaji-orca @sathish-aidev
 
 # Scripts and DevOps
 /scripts/ @sivaji-orca
@@ -19,3 +19,6 @@
 
 # Cursor AI rules
 /.cursor/rules/ @sivaji-orca
+
+# MuleSoft projects
+/projects/ @sivaji-orca
