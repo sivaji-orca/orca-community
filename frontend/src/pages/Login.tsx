@@ -1,11 +1,10 @@
 import { useState } from "react";
 
 interface LoginProps {
-  onLogin: (username: string, password: string, role: string) => Promise<void>;
+  onLogin: (username: string, password: string) => Promise<void>;
 }
 
 export function Login({ onLogin }: LoginProps) {
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -16,7 +15,7 @@ export function Login({ onLogin }: LoginProps) {
     setError("");
     setLoading(true);
     try {
-      await onLogin(username, password, selectedRole!);
+      await onLogin(username, password);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -36,87 +35,58 @@ export function Login({ onLogin }: LoginProps) {
           <p className="text-xs text-slate-400 mt-1">Community Edition</p>
         </div>
 
-        {!selectedRole ? (
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-            <h2 className="text-lg font-semibold text-slate-700 text-center mb-6">
-              Choose your role
-            </h2>
-            <div className="space-y-3">
-              <button
-                onClick={() => setSelectedRole("administrator")}
-                className="w-full px-6 py-4 rounded-xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all text-left cursor-pointer"
-              >
-                <div className="font-semibold text-slate-800">Sign in as Administrator</div>
-                <div className="text-sm text-slate-500 mt-0.5">
-                  Manage team, secrets, and platform settings
-                </div>
-              </button>
-              <button
-                onClick={() => setSelectedRole("developer")}
-                className="w-full px-6 py-4 rounded-xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all text-left cursor-pointer"
-              >
-                <div className="font-semibold text-slate-800">Sign in as Developer</div>
-                <div className="text-sm text-slate-500 mt-0.5">
-                  Access dashboard, manage projects, and deploy
-                </div>
-              </button>
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+          <h2 className="text-lg font-semibold text-slate-700 mb-1">Sign in</h2>
+          <p className="text-sm text-slate-400 mb-6">
+            Enter your credentials to continue
+          </p>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
+              {error}
             </div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                placeholder="Enter username"
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                placeholder="Enter password"
+                required
+              />
+            </div>
             <button
-              onClick={() => { setSelectedRole(null); setError(""); }}
-              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium mb-4 cursor-pointer"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 cursor-pointer"
             >
-              &larr; Back to role selection
+              {loading ? "Signing in..." : "Sign In"}
             </button>
-            <h2 className="text-lg font-semibold text-slate-700 mb-1">
-              Sign in as {selectedRole === "administrator" ? "Administrator" : "Developer"}
-            </h2>
-            <p className="text-sm text-slate-400 mb-6">
-              Enter your credentials to continue
+          </form>
+
+          <div className="mt-5 pt-4 border-t border-slate-100">
+            <p className="text-xs text-slate-400 text-center">
+              Default credentials: <span className="font-mono text-slate-500">developer / developer</span> or{" "}
+              <span className="font-mono text-slate-500">admin / admin</span>
             </p>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-                  placeholder="Enter username"
-                  required
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-                  placeholder="Enter password"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                {loading ? "Signing in..." : "Sign In"}
-              </button>
-            </form>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

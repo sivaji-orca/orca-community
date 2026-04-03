@@ -12,11 +12,14 @@ export function useAuth() {
     return stored ? JSON.parse(stored) : null;
   });
 
-  const login = useCallback(async (username: string, password: string, role: string) => {
+  const login = useCallback(async (username: string, password: string, role?: string) => {
+    const body: Record<string, string> = { username, password };
+    if (role) body.role = role;
+
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, role }),
+      body: JSON.stringify(body),
     });
 
     if (!res.ok) {

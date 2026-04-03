@@ -11,6 +11,7 @@ import { Analytics } from "./Analytics";
 import { PostmanManager } from "./PostmanManager";
 import { GitManager } from "./GitManager";
 import { Settings } from "./Settings";
+import { WorkstationSetup } from "./WorkstationSetup";
 import type { User } from "../../hooks/useAuth";
 
 interface DevDashboardProps {
@@ -18,7 +19,7 @@ interface DevDashboardProps {
   onLogout: () => void;
 }
 
-type Tab = "overview" | "design" | "projects" | "new-project" | "deploy" | "monitoring" | "logs" | "analytics" | "postman" | "git" | "settings";
+type Tab = "overview" | "design" | "projects" | "new-project" | "deploy" | "monitoring" | "logs" | "analytics" | "postman" | "git" | "workstation" | "settings";
 
 export function DevDashboard({ user, onLogout }: DevDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
@@ -34,12 +35,13 @@ export function DevDashboard({ user, onLogout }: DevDashboardProps) {
     { label: "Analytics", path: "analytics", active: activeTab === "analytics", onClick: () => setActiveTab("analytics") },
     { label: "Postman", path: "postman", active: activeTab === "postman", onClick: () => setActiveTab("postman") },
     { label: "Git", path: "git", active: activeTab === "git", onClick: () => setActiveTab("git") },
+    { label: "Workstation", path: "workstation", active: activeTab === "workstation", onClick: () => setActiveTab("workstation") },
     { label: "Settings", path: "settings", active: activeTab === "settings", onClick: () => setActiveTab("settings") },
   ];
 
   return (
     <Layout user={user} onLogout={onLogout} nav={nav}>
-      {activeTab === "overview" && <Overview />}
+      {activeTab === "overview" && <Overview onNavigate={(tab: string) => setActiveTab(tab as Tab)} />}
       {activeTab === "design" && <ApiDesign />}
       {activeTab === "projects" && <ProjectExplorer />}
       {activeTab === "new-project" && <ProjectScaffold />}
@@ -49,6 +51,7 @@ export function DevDashboard({ user, onLogout }: DevDashboardProps) {
       {activeTab === "analytics" && <Analytics />}
       {activeTab === "postman" && <PostmanManager />}
       {activeTab === "git" && <GitManager />}
+      {activeTab === "workstation" && <WorkstationSetup />}
       {activeTab === "settings" && <Settings />}
     </Layout>
   );

@@ -8,8 +8,8 @@ const router = Router();
 router.post("/login", (req: Request, res: Response): void => {
   const { username, password, role } = req.body;
 
-  if (!username || !password || !role) {
-    res.status(400).json({ error: "username, password, and role are required" });
+  if (!username || !password) {
+    res.status(400).json({ error: "username and password are required" });
     return;
   }
 
@@ -21,7 +21,7 @@ router.post("/login", (req: Request, res: Response): void => {
     return;
   }
 
-  if (user.role !== role) {
+  if (role && user.role !== role) {
     res.status(403).json({ error: `User '${username}' is not registered as ${role}` });
     return;
   }

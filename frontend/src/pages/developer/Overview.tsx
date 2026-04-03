@@ -144,7 +144,11 @@ function buildApiStates(
 }
 
 
-export function Overview() {
+interface OverviewProps {
+  onNavigate?: (tab: string) => void;
+}
+
+export function Overview({ onNavigate }: OverviewProps = {}) {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
 
@@ -304,6 +308,61 @@ export function Overview() {
             Loading dashboard…
           </div>
         ) : null}
+
+        {apiStates && (() => {
+          const allUnknown = API_DEFINITIONS.every((d) => apiStates[d.id]?.direct === "unknown");
+          const noMetrics = !analyticsSummary || analyticsSummary.totalRequests === 0;
+          const isFreshInstall = allUnknown && noMetrics;
+          return isFreshInstall ? (
+            <section className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-6 shadow-md">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-bold text-slate-900 mb-1">Welcome! Here's how to get started</h2>
+                  <p className="text-sm text-slate-600 mb-4">
+                    Your dashboard is running but no APIs are deployed yet. Follow these steps to see everything in action.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <button
+                      onClick={() => onNavigate?.("new-project")}
+                      className="flex items-start gap-3 rounded-xl border border-indigo-200 bg-white p-4 text-left hover:border-indigo-400 hover:shadow-sm transition-all cursor-pointer"
+                    >
+                      <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 text-sm font-bold shrink-0">1</span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">Create your first API</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Scaffold a new MuleSoft project in seconds</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => onNavigate?.("deploy")}
+                      className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-indigo-400 hover:shadow-sm transition-all cursor-pointer"
+                    >
+                      <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 text-slate-600 text-sm font-bold shrink-0">2</span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">Deploy locally</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Run your API on the local Mule Runtime</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => onNavigate?.("monitoring")}
+                      className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-indigo-400 hover:shadow-sm transition-all cursor-pointer"
+                    >
+                      <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 text-slate-600 text-sm font-bold shrink-0">3</span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">Monitor & test</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Watch health, logs, and API metrics</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          ) : null;
+        })()}
 
         {apiStates ? (
           <>
