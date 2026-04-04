@@ -3,6 +3,7 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { setSecret, getSecret } from "../services/vault";
 
 const router = Router();
 
@@ -298,6 +299,190 @@ router.post("/install-guide", (req: Request, res: Response): void => {
   }
 
   res.json({ tool, os: currentOS, ...guide });
+});
+
+// ── Configure credentials from the onboarding UI ──────────────────────
+const ROOT_DIR = path.join(import.meta.dir, "../../..");
+const CONFIG_TEMPLATE = path.join(ROOT_DIR, "config.template.yaml");
+const CONFIG_FILE = path.join(ROOT_DIR, "config.yaml");
+const M2_DIR = path.join(os.homedir(), ".m2");
+const SETTINGS_XML = path.join(M2_DIR, "settings.xml");
+
+function ensureConfigYaml(): void {
+  if (!fs.existsSync(CONFIG_FILE) && fs.existsSync(CONFIG_TEMPLATE)) {
+    fs.copyFileSync(CONFIG_TEMPLATE, CONFIG_FILE);
+  }
+}
+
+function updateConfigYamlField(field: string, value: string): void {
+  if (!fs.existsSync(CONFIG_FILE)) return;
+  let content = fs.readFileSync(CONFIG_FILE, "utf8");
+  const regex = new RegExp(`(${field}:\\s*)(".*?"|'.*?'|\\S*)`, "m");
+  if (regex.test(content)) {
+    content = content.replace(regex, `$1"${value}"`);
+  }
+  fs.writeFileSync(CONFIG_FILE, content, "utf8");
+}
+
+function ensureMavenSettings(clientId: string, clientSecret: string): { updated: boolean; message: string } {
+  try {
+    if (!fs.existsSync(M2_DIR)) fs.mkdirSync(M2_DIR, { recursive: true });
+
+    const password = `${clientId}~?~${clientSecret}`;
+
+    if (fs.existsSync(SETTINGS_XML)) {
+      let content = fs.readFileSync(SETTINGS_XML, "utf8");
+      if (content.includes("anypoint-exchange-v3")) {
+        content = content.replace(
+          /(<server>\s*<id>anypoint-exchange-v3<\/id>\s*<username>~~~Client~~~<\/username>\s*<password>)[^<]*(<\/password>)/,
+          `$1${password}$2`
+        );
+        fs.writeFileSync(SETTINGS_XML, content, "utf8");
+        return { updated: true, message: "Updated existing Maven settings.xml with Anypoint credentials" };
+      }
+      const serverBlock = `\n        <server>\n            <id>anypoint-exchange-v3</id>\n            <username>~~~Client~~~</username>\n            <password>${password}</password>\n        </server>`;
+      if (content.includes("</servers>")) {
+        content = content.replace("</servers>", serverBlock + "\n    </servers>");
+      } else if (content.includes("</settings>")) {
+        content = content.replace("</settings>", `    <servers>${serverBlock}\n    </servers>\n</settings>`);
+      }
+      fs.writeFileSync(SETTINGS_XML, content, "utf8");
+      return { updated: true, message: "Added Anypoint Exchange entry to existing Maven settings.xml" };
+    }
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <servers>
+        <server>
+            <id>anypoint-exchange-v3</id>
+            <username>~~~Client~~~</username>
+            <password>${password}</password>
+        </server>
+    </servers>
+    <profiles>
+        <profile>
+            <id>mulesoft</id>
+            <repositories>
+                <repository>
+                    <id>anypoint-exchange-v3</id>
+                    <name>Anypoint Exchange V3</name>
+                    <url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+                </repository>
+                <repository>
+                    <id>mulesoft-releases</id>
+                    <name>MuleSoft Releases</name>
+                    <url>https://repository.mulesoft.org/releases/</url>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>mulesoft-releases</id>
+                    <name>MuleSoft Releases</name>
+                    <url>https://repository.mulesoft.org/releases/</url>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <activeProfile>mulesoft</activeProfile>
+    </activeProfiles>
+</settings>`;
+    fs.writeFileSync(SETTINGS_XML, xml, "utf8");
+    return { updated: true, message: "Created Maven settings.xml with Anypoint credentials and MuleSoft repos" };
+  } catch (err) {
+    return { updated: false, message: `Maven settings.xml update failed: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
+
+interface ConfigureBody {
+  anypoint?: { client_id?: string; client_secret?: string; org_id?: string; environment?: string };
+  github?: { token?: string; org?: string };
+  postman?: { api_key?: string };
+}
+
+router.post("/configure", (req: Request, res: Response): void => {
+  const body: ConfigureBody = req.body;
+  const results: string[] = [];
+
+  try {
+    ensureConfigYaml();
+
+    if (body.anypoint) {
+      const { client_id, client_secret, org_id, environment } = body.anypoint;
+      if (client_id) {
+        setSecret("anypoint_client_id", client_id, "anypoint");
+        updateConfigYamlField("client_id", client_id);
+        results.push("Anypoint Client ID saved to vault");
+      }
+      if (client_secret) {
+        setSecret("anypoint_client_secret", client_secret, "anypoint");
+        updateConfigYamlField("client_secret", client_secret);
+        results.push("Anypoint Client Secret saved to vault");
+      }
+      if (org_id) {
+        setSecret("anypoint_org_id", org_id, "anypoint");
+        updateConfigYamlField("org_id", org_id);
+        results.push("Anypoint Org ID saved to vault");
+      }
+      if (environment) {
+        updateConfigYamlField("environment", environment);
+        results.push(`Environment set to ${environment}`);
+      }
+      if (client_id && client_secret) {
+        const maven = ensureMavenSettings(client_id, client_secret);
+        results.push(maven.message);
+      }
+    }
+
+    if (body.github) {
+      const { token, org } = body.github;
+      if (token) {
+        setSecret("github_token", token, "github");
+        updateConfigYamlField("token", token);
+        results.push("GitHub token saved to vault");
+      }
+      if (org) {
+        setSecret("github_org", org, "github");
+        results.push("GitHub org saved");
+      }
+    }
+
+    if (body.postman?.api_key) {
+      setSecret("postman_api_key", body.postman.api_key, "postman");
+      results.push("Postman API key saved to vault");
+    }
+
+    res.json({
+      success: true,
+      message: results.length > 0 ? "Configuration saved successfully" : "No credentials provided",
+      details: results,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err instanceof Error ? err.message : "Configuration failed",
+      details: results,
+    });
+  }
+});
+
+router.get("/configure/status", (_req: Request, res: Response): void => {
+  const anypoint = {
+    client_id: !!getSecret("anypoint_client_id"),
+    client_secret: !!getSecret("anypoint_client_secret"),
+    org_id: !!getSecret("anypoint_org_id"),
+  };
+  const github = { token: !!getSecret("github_token") };
+  const postman = { api_key: !!getSecret("postman_api_key") };
+
+  res.json({
+    configured: anypoint.client_id && anypoint.client_secret,
+    anypoint,
+    github,
+    postman,
+  });
 });
 
 export default router;

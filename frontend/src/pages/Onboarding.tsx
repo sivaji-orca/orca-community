@@ -102,6 +102,18 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [guides, setGuides] = useState<Record<string, InstallGuide>>({});
   const [loadingGuide, setLoadingGuide] = useState<string | null>(null);
 
+  const [configForm, setConfigForm] = useState({
+    anypoint_client_id: "",
+    anypoint_client_secret: "",
+    anypoint_org_id: "",
+    github_token: "",
+    postman_api_key: "",
+  });
+  const [configSaving, setConfigSaving] = useState(false);
+  const [configResult, setConfigResult] = useState<{ success: boolean; message: string; details: string[] } | null>(null);
+  const [configSection, setConfigSection] = useState<"anypoint" | "more">("anypoint");
+  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
+
   const checkPrereqs = useCallback(async () => {
     setChecking(true);
     try {
@@ -135,6 +147,40 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     } catch { /* ignored */ }
     finally { setLoadingGuide(null); }
   };
+
+  const saveCredentials = async () => {
+    setConfigSaving(true);
+    setConfigResult(null);
+    try {
+      const body: Record<string, Record<string, string>> = {};
+      if (configForm.anypoint_client_id || configForm.anypoint_client_secret || configForm.anypoint_org_id) {
+        body.anypoint = {};
+        if (configForm.anypoint_client_id) body.anypoint.client_id = configForm.anypoint_client_id;
+        if (configForm.anypoint_client_secret) body.anypoint.client_secret = configForm.anypoint_client_secret;
+        if (configForm.anypoint_org_id) body.anypoint.org_id = configForm.anypoint_org_id;
+      }
+      if (configForm.github_token) body.github = { token: configForm.github_token };
+      if (configForm.postman_api_key) body.postman = { api_key: configForm.postman_api_key };
+
+      const res = await fetch("/api/system/configure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      setConfigResult(data);
+    } catch {
+      setConfigResult({ success: false, message: "Network error — is the backend running?", details: [] });
+    } finally {
+      setConfigSaving(false);
+    }
+  };
+
+  const toggleSecret = (field: string) =>
+    setShowSecrets((prev) => ({ ...prev, [field]: !prev[field] }));
+
+  const hasAnyCredential =
+    configForm.anypoint_client_id.trim() !== "" || configForm.anypoint_client_secret.trim() !== "";
 
   const failingRequired = prereqs?.prerequisites.filter(
     (p) => p.required && (!p.installed || !p.meetsMinimum)
@@ -441,40 +487,207 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
             <h2 className="text-xl font-bold text-slate-800 mb-1">Configure Credentials</h2>
             <p className="text-sm text-slate-500 mb-6">
-              Optional: connect to MuleSoft Anypoint Platform for full functionality.
+              Connect to MuleSoft Anypoint Platform directly from here — no terminal needed.
             </p>
 
-            <div className="grid gap-4 mb-6">
-              <div className="rounded-xl border border-slate-200 p-5">
-                <h3 className="font-semibold text-slate-800 mb-2">I have Anypoint credentials</h3>
-                <p className="text-sm text-slate-500 mb-3">
-                  You'll need your Anypoint <code className="bg-slate-100 px-1 rounded text-xs">client_id</code> and{" "}
-                  <code className="bg-slate-100 px-1 rounded text-xs">client_secret</code>.
-                </p>
-                <div className="space-y-2">
-                  <div className="bg-slate-900 rounded-lg p-3 flex items-center justify-between gap-3">
-                    <code className="text-sm text-emerald-400 font-mono">cp config.template.yaml config.yaml && nano config.yaml</code>
-                    <CopyButton text="cp config.template.yaml config.yaml && nano config.yaml" />
-                  </div>
-                  <div className="bg-slate-900 rounded-lg p-3 flex items-center justify-between gap-3">
-                    <code className="text-sm text-emerald-400 font-mono">./scripts/configure.sh</code>
-                    <CopyButton text="./scripts/configure.sh" />
-                  </div>
-                </div>
-                <p className="text-xs text-slate-400 mt-2">
-                  Edit config.yaml with your credentials, then run configure.sh to set up Maven settings and vault.
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-5">
-                <h3 className="font-semibold text-slate-800 mb-2">I don't have credentials yet</h3>
-                <p className="text-sm text-slate-500">
-                  No problem! You can explore the full dashboard, use the mock services, and create local projects
-                  without Anypoint credentials. Configure them later in the <strong>Settings</strong> tab.
-                </p>
-              </div>
+            {/* Section tabs */}
+            <div className="flex gap-1 mb-6 bg-slate-100 rounded-lg p-1">
+              {(
+                [
+                  { id: "anypoint" as const, label: "Anypoint Platform", icon: "M" },
+                  { id: "more" as const, label: "GitHub & Postman", icon: "+" },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setConfigSection(tab.id)}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all cursor-pointer ${
+                    configSection === tab.id
+                      ? "bg-white text-slate-800 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <span className="w-5 h-5 rounded bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">
+                    {tab.icon}
+                  </span>
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
+            {/* Anypoint section */}
+            {configSection === "anypoint" && (
+              <div className="space-y-4 mb-6">
+                <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+                  <p className="text-sm text-amber-800">
+                    <strong>Where do I get these?</strong>{" "}
+                    Log in to{" "}
+                    <a
+                      href="https://anypoint.mulesoft.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline font-medium"
+                    >
+                      anypoint.mulesoft.com
+                    </a>
+                    {" "}&rarr; Access Management &rarr; Connected Apps &rarr; Create a new app with{" "}
+                    <em>Client Credentials</em> grant type.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Client ID</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. a1b2c3d4e5f6a1b2c3d4e5f6"
+                    value={configForm.anypoint_client_id}
+                    onChange={(e) => setConfigForm((f) => ({ ...f, anypoint_client_id: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Client Secret</label>
+                  <div className="relative">
+                    <input
+                      type={showSecrets["client_secret"] ? "text" : "password"}
+                      placeholder="e.g. A1b2C3d4E5f6G7h8I9j0..."
+                      value={configForm.anypoint_client_secret}
+                      onChange={(e) => setConfigForm((f) => ({ ...f, anypoint_client_secret: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSecret("client_secret")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      title={showSecrets["client_secret"] ? "Hide" : "Show"}
+                    >
+                      {showSecrets["client_secret"] ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Organization ID <span className="text-slate-400 font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 12345678-abcd-1234-abcd-123456789012"
+                    value={configForm.anypoint_org_id}
+                    onChange={(e) => setConfigForm((f) => ({ ...f, anypoint_org_id: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* GitHub & Postman section */}
+            {configSection === "more" && (
+              <div className="space-y-4 mb-6">
+                <p className="text-xs text-slate-400">
+                  These are optional — configure them now or later in Settings.
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">GitHub Token</label>
+                  <div className="relative">
+                    <input
+                      type={showSecrets["github_token"] ? "text" : "password"}
+                      placeholder="ghp_..."
+                      value={configForm.github_token}
+                      onChange={(e) => setConfigForm((f) => ({ ...f, github_token: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSecret("github_token")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showSecrets["github_token"] ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Enables Git push/PR features. Needs <code className="bg-slate-100 px-1 rounded">repo</code> scope.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Postman API Key</label>
+                  <div className="relative">
+                    <input
+                      type={showSecrets["postman_key"] ? "text" : "password"}
+                      placeholder="PMAK-..."
+                      value={configForm.postman_api_key}
+                      onChange={(e) => setConfigForm((f) => ({ ...f, postman_api_key: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSecret("postman_key")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showSecrets["postman_key"] ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Enables collection sync. Get it from Postman &rarr; Settings &rarr; API Keys.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Result feedback */}
+            {configResult && (
+              <div
+                className={`rounded-xl border p-4 mb-6 ${
+                  configResult.success
+                    ? "border-emerald-200 bg-emerald-50"
+                    : "border-red-200 bg-red-50"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                      configResult.success ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
+                    }`}
+                  >
+                    {configResult.success ? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    )}
+                  </div>
+                  <div>
+                    <p className={`font-semibold text-sm ${configResult.success ? "text-emerald-800" : "text-red-800"}`}>
+                      {configResult.message}
+                    </p>
+                    {configResult.details.length > 0 && (
+                      <ul className="mt-1 space-y-0.5">
+                        {configResult.details.map((d, i) => (
+                          <li key={i} className={`text-xs ${configResult.success ? "text-emerald-600" : "text-red-600"}`}>
+                            {configResult.success ? "\u2713" : "\u2717"} {d}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Action buttons */}
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setStep("check")}
@@ -482,13 +695,51 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               >
                 &larr; Back
               </button>
-              <button
-                onClick={() => setStep("ready")}
-                className="px-6 py-2 bg-primary text-white text-sm rounded-lg font-semibold hover:bg-primary-hover cursor-pointer"
-              >
-                Continue
-              </button>
+              <div className="flex gap-3">
+                {hasAnyCredential && (
+                  <button
+                    onClick={saveCredentials}
+                    disabled={configSaving}
+                    className="px-6 py-2 bg-primary text-white text-sm rounded-lg font-semibold hover:bg-primary-hover disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                  >
+                    {configSaving ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Save &amp; Configure
+                      </>
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={() => setStep("ready")}
+                  className={`px-6 py-2 text-sm rounded-lg font-semibold cursor-pointer ${
+                    hasAnyCredential
+                      ? "border border-slate-300 text-slate-600 hover:bg-slate-50"
+                      : "bg-primary text-white hover:bg-primary-hover"
+                  }`}
+                >
+                  {hasAnyCredential ? "Skip for now" : "Skip \u2014 I'll configure later"}
+                </button>
+              </div>
             </div>
+
+            {/* No-creds helper */}
+            {!hasAnyCredential && (
+              <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm text-slate-600">
+                  <strong className="text-slate-700">Don't have credentials yet?</strong>{" "}
+                  No problem — you can explore the dashboard, create local projects with mock services,
+                  and add Anypoint credentials later from <strong>Settings &rarr; Secrets</strong>.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
