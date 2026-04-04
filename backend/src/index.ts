@@ -23,6 +23,7 @@ import securityRoutes from "./routes/security";
 import brandingRoutes from "./routes/branding";
 import scannerRoutes from "./routes/scanner";
 import dataweaveRoutes from "./routes/dataweave";
+import sfDevtoolsRoutes from "./routes/sf-devtools";
 
 import { startMetricsParsing } from "./services/analytics";
 import { resolveWorkspace } from "./middleware/auth";
@@ -56,6 +57,7 @@ app.use("/api/security", securityRoutes);
 app.use("/api/branding", brandingRoutes);
 app.use("/api/scanner", scannerRoutes);
 app.use("/api/dataweave", dataweaveRoutes);
+app.use("/api/sf-devtools", sfDevtoolsRoutes);
 
 migrateProjectsToWorkspaces();
 startMetricsParsing();

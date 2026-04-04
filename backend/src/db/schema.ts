@@ -156,6 +156,75 @@ function initDb(): Database {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS sf_schema_objects (
+      name TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      key_prefix TEXT,
+      is_custom INTEGER DEFAULT 0,
+      is_queryable INTEGER DEFAULT 1,
+      is_createable INTEGER DEFAULT 0,
+      is_updateable INTEGER DEFAULT 0,
+      is_deletable INTEGER DEFAULT 0,
+      record_count INTEGER DEFAULT 0,
+      last_refreshed TEXT DEFAULT (datetime('now')),
+      workspace_id INTEGER DEFAULT 1 REFERENCES workspaces(id)
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS sf_schema_fields (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      object_name TEXT NOT NULL,
+      field_name TEXT NOT NULL,
+      label TEXT NOT NULL,
+      type TEXT NOT NULL,
+      length INTEGER DEFAULT 0,
+      precision_val INTEGER DEFAULT 0,
+      scale INTEGER DEFAULT 0,
+      reference_to TEXT,
+      picklist_values TEXT,
+      is_required INTEGER DEFAULT 0,
+      is_unique INTEGER DEFAULT 0,
+      is_custom INTEGER DEFAULT 0,
+      is_createable INTEGER DEFAULT 0,
+      is_updateable INTEGER DEFAULT 0,
+      is_formula INTEGER DEFAULT 0,
+      formula TEXT,
+      default_value TEXT,
+      description TEXT,
+      workspace_id INTEGER DEFAULT 1 REFERENCES workspaces(id),
+      UNIQUE(object_name, field_name, workspace_id)
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS sf_soql_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      query_text TEXT NOT NULL,
+      nlp_prompt TEXT,
+      execution_time_ms INTEGER DEFAULT 0,
+      row_count INTEGER DEFAULT 0,
+      success INTEGER DEFAULT 1,
+      error_message TEXT,
+      executed_at TEXT DEFAULT (datetime('now')),
+      workspace_id INTEGER DEFAULT 1 REFERENCES workspaces(id)
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS sf_soql_favorites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      query_text TEXT NOT NULL,
+      tags TEXT DEFAULT '[]',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      workspace_id INTEGER DEFAULT 1 REFERENCES workspaces(id)
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS vault_audit (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       correlation_id TEXT NOT NULL,

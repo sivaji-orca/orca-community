@@ -9,10 +9,12 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@types/jsforce": "^1.11.6",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "jsforce": "^3.10.14",
     "jsonwebtoken": "^9.0.3",
     "kafkajs": "^2.2.4",
     "pg": "^8.20.0"
