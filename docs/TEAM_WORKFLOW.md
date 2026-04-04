@@ -206,6 +206,10 @@ All checks must pass before a PR can be merged to `main`.
 | Sivaji | [@sivaji-orca](https://github.com/sivaji-orca) | `dev/sivaji` | Owner / Maintainer |
 | Sathish | [@sathish-aidev](https://github.com/sathish-aidev) | `dev/sathish` | Contributor |
 | Rajiv | TBD | `dev/rajiv` | Contributor |
+| Narendra | TBD | `dev/narendra` | Contributor |
+| Srinivas | TBD | `dev/srinivas` | Contributor |
+| Leela | TBD | `dev/leela` | Contributor |
+| Sivaji Nandimandalam | TBD | `dev/sivajinandimandalam` | Contributor |
 
 ---
 
