@@ -78,6 +78,51 @@ function initDb(): Database {
   migrateColumn(db, "api_metrics", "workspace_id", "INTEGER DEFAULT 1 REFERENCES workspaces(id)");
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS branding (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      app_name TEXT NOT NULL DEFAULT 'Orca Community Edition',
+      app_short_name TEXT NOT NULL DEFAULT 'Orca',
+      description TEXT DEFAULT 'MuleSoft Developer Productivity Tool',
+      logo_svg TEXT,
+      repo_name TEXT,
+      forked_at TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS scan_results (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      project_name TEXT NOT NULL,
+      source_url TEXT,
+      scanned_at TEXT DEFAULT (datetime('now')),
+      total_findings INTEGER DEFAULT 0,
+      critical_count INTEGER DEFAULT 0,
+      warning_count INTEGER DEFAULT 0,
+      info_count INTEGER DEFAULT 0,
+      health_score INTEGER DEFAULT 0,
+      migration_ready INTEGER DEFAULT 0,
+      results_json TEXT,
+      workspace_id INTEGER DEFAULT 1 REFERENCES workspaces(id)
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS migrations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scan_id INTEGER REFERENCES scan_results(id),
+      source_path TEXT NOT NULL,
+      target_workspace_id INTEGER REFERENCES workspaces(id),
+      status TEXT DEFAULT 'planned' CHECK(status IN ('planned','in_progress','completed','failed')),
+      plan_json TEXT,
+      result_json TEXT,
+      started_at TEXT,
+      completed_at TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS vault_audit (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       correlation_id TEXT NOT NULL,

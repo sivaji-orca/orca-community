@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { ThemeContext, useThemeProvider } from "./hooks/useTheme";
 import { WorkspaceContext, useWorkspaceProvider } from "./hooks/useWorkspace";
+import { BrandingContext, useBrandingProvider, useBranding } from "./hooks/useBranding";
 import { Onboarding } from "./pages/Onboarding";
 import { Login } from "./pages/Login";
 import { AdminDashboard } from "./pages/admin/Dashboard";
@@ -9,9 +10,14 @@ import { DevDashboard } from "./pages/developer/Dashboard";
 
 function AppContent() {
   const { user, login, logout, isAuthenticated } = useAuth();
+  const { branding } = useBranding();
   const [onboarded, setOnboarded] = useState(
     () => localStorage.getItem("orca_onboarding_complete") === "true"
   );
+
+  useEffect(() => {
+    document.title = branding.appName;
+  }, [branding.appName]);
 
   if (!onboarded) {
     return (
@@ -46,11 +52,14 @@ function AppContent() {
 function App() {
   const theme = useThemeProvider();
   const workspace = useWorkspaceProvider();
+  const brandingCtx = useBrandingProvider();
 
   return (
     <ThemeContext.Provider value={theme}>
       <WorkspaceContext.Provider value={workspace}>
-        <AppContent />
+        <BrandingContext.Provider value={brandingCtx}>
+          <AppContent />
+        </BrandingContext.Provider>
       </WorkspaceContext.Provider>
     </ThemeContext.Provider>
   );

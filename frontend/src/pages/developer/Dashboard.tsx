@@ -13,6 +13,7 @@ import { GitManager } from "./GitManager";
 import { Settings } from "./Settings";
 import { WorkstationSetup } from "./WorkstationSetup";
 import { UseCaseGallery } from "./UseCaseGallery";
+import { CodeScanner } from "./CodeScanner";
 import type { User } from "../../hooks/useAuth";
 
 interface DevDashboardProps {
@@ -20,7 +21,7 @@ interface DevDashboardProps {
   onLogout: () => void;
 }
 
-type Tab = "overview" | "design" | "projects" | "new-project" | "use-cases" | "deploy" | "monitoring" | "logs" | "analytics" | "postman" | "git" | "workstation" | "settings";
+type Tab = "overview" | "design" | "projects" | "new-project" | "use-cases" | "scanner" | "deploy" | "monitoring" | "logs" | "analytics" | "postman" | "git" | "workstation" | "settings";
 
 export function DevDashboard({ user, onLogout }: DevDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
@@ -31,6 +32,7 @@ export function DevDashboard({ user, onLogout }: DevDashboardProps) {
     { label: "Projects", path: "projects", active: activeTab === "projects", onClick: () => setActiveTab("projects") },
     { label: "New Project", path: "new-project", active: activeTab === "new-project", onClick: () => setActiveTab("new-project") },
     { label: "Use Cases", path: "use-cases", active: activeTab === "use-cases", onClick: () => setActiveTab("use-cases") },
+    { label: "Code Scanner", path: "scanner", active: activeTab === "scanner", onClick: () => setActiveTab("scanner") },
     { label: "Deploy", path: "deploy", active: activeTab === "deploy", onClick: () => setActiveTab("deploy") },
     { label: "Monitoring", path: "monitoring", active: activeTab === "monitoring", onClick: () => setActiveTab("monitoring") },
     { label: "Logs", path: "logs", active: activeTab === "logs", onClick: () => setActiveTab("logs") },
@@ -48,6 +50,7 @@ export function DevDashboard({ user, onLogout }: DevDashboardProps) {
       {activeTab === "projects" && <ProjectExplorer />}
       {activeTab === "new-project" && <ProjectScaffold />}
       {activeTab === "use-cases" && <UseCaseGallery onNavigate={(tab: string) => setActiveTab(tab as Tab)} />}
+      {activeTab === "scanner" && <CodeScanner />}
       {activeTab === "deploy" && <Deploy />}
       {activeTab === "monitoring" && <Monitoring />}
       {activeTab === "logs" && <LogViewer />}

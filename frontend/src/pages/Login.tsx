@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useBranding } from "../hooks/useBranding";
 
 interface LoginProps {
   onLogin: (username: string, password: string) => Promise<void>;
@@ -6,6 +7,7 @@ interface LoginProps {
 }
 
 export function Login({ onLogin, onRestartOnboarding }: LoginProps) {
+  const { branding } = useBranding();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -28,12 +30,15 @@ export function Login({ onLogin, onRestartOnboarding }: LoginProps) {
     <div className="min-h-screen bg-gradient-to-br from-primary-bg-subtle via-white to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-bg">
-            <span className="text-white font-bold text-2xl">O</span>
-          </div>
-          <h1 className="text-3xl font-bold text-slate-800">Orca</h1>
-          <p className="text-slate-500 mt-1">MuleSoft Developer Productivity Tool</p>
-          <p className="text-xs text-slate-400 mt-1">Community Edition</p>
+          {branding.logoSvg ? (
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-bg overflow-hidden text-primary" dangerouslySetInnerHTML={{ __html: branding.logoSvg }} />
+          ) : (
+            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-bg">
+              <span className="text-white font-bold text-2xl">{branding.appShortName[0]}</span>
+            </div>
+          )}
+          <h1 className="text-3xl font-bold text-slate-800">{branding.appShortName}</h1>
+          <p className="text-slate-500 mt-1">{branding.description}</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">

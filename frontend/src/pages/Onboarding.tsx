@@ -30,9 +30,10 @@ interface OnboardingProps {
   onComplete: () => void;
 }
 
-type Step = "welcome" | "check" | "install" | "configure" | "ready";
+type Step = "brand" | "welcome" | "check" | "install" | "configure" | "ready";
 
 const STEPS: { id: Step; label: string }[] = [
+  { id: "brand", label: "Brand" },
   { id: "welcome", label: "Welcome" },
   { id: "check", label: "Prerequisites" },
   { id: "install", label: "Install" },
@@ -101,10 +102,15 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export function Onboarding({ onComplete }: OnboardingProps) {
-  const [step, setStep] = useState<Step>("welcome");
+  const [step, setStep] = useState<Step>("brand");
   const [prereqs, setPrereqs] = useState<PrereqResponse | null>(null);
   const [checking, setChecking] = useState(false);
   const [guides, setGuides] = useState<Record<string, InstallGuide>>({});
+
+  const [brandName, setBrandName] = useState("");
+  const [brandDescription, setBrandDescription] = useState("");
+  const [brandLogoPreview, setBrandLogoPreview] = useState<string | null>(null);
+  const [brandSaving, setBrandSaving] = useState(false);
   const [loadingGuide, setLoadingGuide] = useState<string | null>(null);
 
   const [configForm, setConfigForm] = useState({
@@ -233,6 +239,114 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     <div className="min-h-screen bg-gradient-to-br from-primary-bg-subtle via-white to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <StepIndicator current={step} onNavigate={setStep} />
+
+        {/* ===== STEP 0: BRAND YOUR APP ===== */}
+        {step === "brand" && (
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-10">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-bg">
+                <span className="text-white font-bold text-2xl">{brandName?.[0]?.toUpperCase() || "O"}</span>
+              </div>
+              <h1 className="text-2xl font-bold text-slate-800 mb-1">Brand Your App</h1>
+              <p className="text-sm text-slate-500">
+                Give your instance a name and identity, or keep the defaults.
+              </p>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">App Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Dhurandhar, Apex Tools, MyOrg Integrations"
+                  value={brandName}
+                  onChange={(e) => setBrandName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-ring outline-none transition-all"
+                  autoFocus
+                />
+                <p className="text-xs text-slate-400 mt-1">This will appear in the header, login screen, and page title.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
+                <textarea
+                  placeholder="MuleSoft Developer Productivity Tool"
+                  value={brandDescription}
+                  onChange={(e) => setBrandDescription(e.target.value)}
+                  rows={2}
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-ring outline-none transition-all resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Logo <span className="text-slate-400 font-normal">(optional SVG)</span>
+                </label>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-slate-300 rounded-lg text-sm text-slate-500 hover:border-primary hover:text-primary cursor-pointer transition-colors">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Upload SVG
+                    <input
+                      type="file"
+                      accept=".svg"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = () => setBrandLogoPreview(reader.result as string);
+                        reader.readAsText(file);
+                      }}
+                    />
+                  </label>
+                  {brandLogoPreview && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center overflow-hidden bg-white" dangerouslySetInnerHTML={{ __html: brandLogoPreview }} />
+                      <button onClick={() => setBrandLogoPreview(null)} className="text-xs text-red-500 hover:text-red-600 cursor-pointer">Remove</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mt-8">
+              <button
+                onClick={() => setStep("welcome")}
+                className="text-sm text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                Skip (use Orca defaults)
+              </button>
+              <button
+                onClick={async () => {
+                  if (!brandName.trim()) {
+                    setStep("welcome");
+                    return;
+                  }
+                  setBrandSaving(true);
+                  try {
+                    await fetch("/api/branding", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        appName: brandName.trim(),
+                        description: brandDescription.trim() || undefined,
+                        logoSvg: brandLogoPreview || undefined,
+                      }),
+                    });
+                  } catch { /* best-effort */ }
+                  setBrandSaving(false);
+                  setStep("welcome");
+                }}
+                disabled={brandSaving}
+                className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary-hover transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {brandSaving ? "Saving..." : "Continue"}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ===== STEP 1: WELCOME ===== */}
         {step === "welcome" && (

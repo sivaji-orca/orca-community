@@ -20,6 +20,8 @@ import loggingRoutes from "./routes/logging";
 import analyticsRoutes from "./routes/analytics";
 import salesforceRoutes from "./routes/salesforce";
 import securityRoutes from "./routes/security";
+import brandingRoutes from "./routes/branding";
+import scannerRoutes from "./routes/scanner";
 
 import { startMetricsParsing } from "./services/analytics";
 import { resolveWorkspace } from "./middleware/auth";
@@ -50,6 +52,8 @@ app.use("/api/logs", loggingRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/salesforce", salesforceRoutes);
 app.use("/api/security", securityRoutes);
+app.use("/api/branding", brandingRoutes);
+app.use("/api/scanner", scannerRoutes);
 
 migrateProjectsToWorkspaces();
 startMetricsParsing();

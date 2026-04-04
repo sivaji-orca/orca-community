@@ -1,6 +1,7 @@
 import { type ReactNode, useState, useRef, useEffect } from "react";
 import type { User } from "../hooks/useAuth";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useBranding } from "../hooks/useBranding";
 
 interface LayoutProps {
   user: User;
@@ -116,16 +117,21 @@ function WorkspaceSwitcher() {
 }
 
 export function Layout({ user, onLogout, children, nav }: LayoutProps) {
+  const { branding } = useBranding();
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-white font-bold text-sm">O</span>
-              </div>
-              <h1 className="text-xl font-bold text-text">Orca Community</h1>
+              {branding.logoSvg ? (
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden text-primary" dangerouslySetInnerHTML={{ __html: branding.logoSvg }} />
+              ) : (
+                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">{branding.appShortName[0]}</span>
+                </div>
+              )}
+              <h1 className="text-xl font-bold text-text">{branding.appShortName}</h1>
               <WorkspaceSwitcher />
               <span className="text-xs bg-primary-bg text-primary-text px-2 py-0.5 rounded-full font-medium">
                 {user.role}
@@ -168,7 +174,7 @@ export function Layout({ user, onLogout, children, nav }: LayoutProps) {
 
       <footer className="border-t border-slate-200 mt-12 py-4">
         <p className="text-center text-xs text-slate-400">
-          Orca Community Edition &mdash; orcaesb.com
+          {branding.appName} &mdash; orcaesb.com
         </p>
       </footer>
     </div>
