@@ -2,6 +2,12 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 
+interface AuditContext {
+  correlationId?: string;
+  userId?: string;
+  ipAddress?: string;
+}
+
 const DATA_DIR = path.join(import.meta.dir, "../../data");
 const VAULT_PATH = path.join(DATA_DIR, "vault.enc");
 const ALGORITHM = "aes-256-gcm";
@@ -66,6 +72,30 @@ function wsKey(key: string, workspaceId?: number): string {
   return key;
 }
 
+function maskSecretKey(key: string): string {
+  if (key.length <= 6) return key;
+  return key.slice(0, 3) + "***" + key.slice(-3);
+}
+
+function logAudit(action: "read" | "write" | "delete", secretKey: string, ctx?: AuditContext): void {
+  try {
+    const { getDb } = require("../db/schema");
+    const db = getDb();
+    db.run(
+      "INSERT INTO vault_audit (correlation_id, action, secret_key, user_id, ip_address) VALUES (?, ?, ?, ?, ?)",
+      [
+        ctx?.correlationId || "system",
+        action,
+        maskSecretKey(secretKey),
+        ctx?.userId || null,
+        ctx?.ipAddress || null,
+      ]
+    );
+  } catch {
+    // Don't let audit failures break vault operations
+  }
+}
+
 export function listSecrets(workspaceId?: number): Array<{ key: string; category: string; updatedAt: string }> {
   const vault = readVault();
   const prefix = workspaceId && workspaceId > 1 ? `ws:${workspaceId}:` : "";
@@ -82,8 +112,9 @@ export function listSecrets(workspaceId?: number): Array<{ key: string; category
     }));
 }
 
-export function getSecret(key: string, workspaceId?: number): string | null {
+export function getSecret(key: string, workspaceId?: number, auditCtx?: AuditContext): string | null {
   const vault = readVault();
+  logAudit("read", key, auditCtx);
   if (workspaceId && workspaceId > 1) {
     const scoped = vault[`ws:${workspaceId}:${key}`];
     if (scoped) return scoped.value;
@@ -91,19 +122,21 @@ export function getSecret(key: string, workspaceId?: number): string | null {
   return vault[key]?.value ?? null;
 }
 
-export function setSecret(key: string, value: string, category: string, workspaceId?: number): void {
+export function setSecret(key: string, value: string, category: string, workspaceId?: number, auditCtx?: AuditContext): void {
   const vault = readVault();
   const storeKey = wsKey(key, workspaceId);
   vault[storeKey] = { value, category, updatedAt: new Date().toISOString() };
   writeVault(vault);
+  logAudit("write", key, auditCtx);
 }
 
-export function deleteSecret(key: string, workspaceId?: number): boolean {
+export function deleteSecret(key: string, workspaceId?: number, auditCtx?: AuditContext): boolean {
   const vault = readVault();
   const storeKey = wsKey(key, workspaceId);
   if (!(storeKey in vault)) return false;
   delete vault[storeKey];
   writeVault(vault);
+  logAudit("delete", key, auditCtx);
   return true;
 }
 

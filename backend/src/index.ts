@@ -19,16 +19,20 @@ import deployRoutes from "./routes/deploy";
 import loggingRoutes from "./routes/logging";
 import analyticsRoutes from "./routes/analytics";
 import salesforceRoutes from "./routes/salesforce";
+import securityRoutes from "./routes/security";
 
 import { startMetricsParsing } from "./services/analytics";
 import { resolveWorkspace } from "./middleware/auth";
+import { correlationId, requestLogger } from "./middleware/correlationId";
 import { migrateProjectsToWorkspaces } from "./services/git";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3003;
 
 app.use(cors());
+app.use(correlationId);
 app.use(express.json({ limit: "10mb" }));
+app.use(requestLogger);
 app.use(resolveWorkspace);
 
 app.use("/api/system", systemRoutes);
@@ -45,6 +49,7 @@ app.use("/api/deploy", deployRoutes);
 app.use("/api/logs", loggingRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/salesforce", salesforceRoutes);
+app.use("/api/security", securityRoutes);
 
 migrateProjectsToWorkspaces();
 startMetricsParsing();

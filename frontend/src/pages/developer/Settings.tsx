@@ -5,7 +5,7 @@ import { useWorkspace, type Workspace } from "../../hooks/useWorkspace";
 
 const MASK = "••••••••";
 
-type SettingsSubTab = "workspaces" | "secrets" | "salesforce" | "team" | "appearance";
+type SettingsSubTab = "workspaces" | "secrets" | "salesforce" | "team" | "security" | "appearance";
 
 const ACCENT_PRESETS: { id: AccentColor; label: string; swatch: string }[] = [
   { id: "honey", label: "Honey", swatch: "#b45309" },
@@ -259,6 +259,7 @@ export function Settings() {
     { id: "secrets", label: "Secrets" },
     { id: "salesforce", label: "Salesforce" },
     { id: "team", label: "Team" },
+    { id: "security", label: "Security" },
     { id: "appearance", label: "Appearance" },
   ];
 
@@ -698,6 +699,8 @@ export function Settings() {
         </section>
       )}
 
+      {subTab === "security" && <SecurityTab />}
+
       {subTab === "appearance" && <AppearanceTab />}
     </div>
   );
@@ -961,6 +964,241 @@ function AppearanceTab() {
           Changes are applied instantly and saved to your browser. They persist across sessions.
         </p>
       </div>
+    </section>
+  );
+}
+
+interface FieldEntry { field: string; sensitivity: string; maskingRule: string; example: string }
+interface AuditEntry { id: number; correlation_id: string; action: string; secret_key: string; user_id: string | null; ip_address: string | null; timestamp: string }
+interface SecurityStatus {
+  encryption: { enabled: boolean; algorithm: string; keySource: string; fieldEncryptionEnabled: boolean };
+  piiClassification: { enabled: boolean; totalFields: number; piiFields: number; pciFields: number; secretFields: number };
+  vaultAudit: { enabled: boolean; totalEntries: number; lastAccess: string | null };
+  correlationId: { enabled: boolean; headerName: string; propagation: string[] };
+}
+
+function SecurityTab() {
+  const [secView, setSecView] = useState<"overview" | "fields" | "audit" | "mask">("overview");
+  const [fields, setFields] = useState<FieldEntry[]>([]);
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [auditTotal, setAuditTotal] = useState(0);
+  const [status, setStatus] = useState<SecurityStatus | null>(null);
+  const [maskInput, setMaskInput] = useState('{\n  "email": "jane@example.com",\n  "first_name": "Jane",\n  "phone": "+1-555-867-5309",\n  "sf_id": "003xx000004TmiZ"\n}');
+  const [maskResult, setMaskResult] = useState<{ masked: Record<string, unknown>; details: Array<{ field: string; sensitivity: string; masked: string; wasMasked: boolean }> } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (secView === "overview") {
+      api.get<{ encryption: SecurityStatus["encryption"]; piiClassification: SecurityStatus["piiClassification"]; vaultAudit: SecurityStatus["vaultAudit"]; correlationId: SecurityStatus["correlationId"] }>("/security/status").then(setStatus).catch(() => {});
+    }
+    if (secView === "fields") {
+      api.get<{ fields: FieldEntry[] }>("/security/fields").then(r => setFields(r.fields)).catch(() => {});
+    }
+    if (secView === "audit") {
+      api.get<{ entries: AuditEntry[]; total: number }>("/security/vault-audit?limit=50").then(r => { setAuditEntries(r.entries); setAuditTotal(r.total); }).catch(() => {});
+    }
+  }, [secView]);
+
+  const runMaskTest = async () => {
+    setLoading(true);
+    try {
+      const payload = JSON.parse(maskInput);
+      const result = await api.post<{ masked: Record<string, unknown>; details: Array<{ field: string; sensitivity: string; masked: string; wasMasked: boolean }> }>("/security/test-mask", { payload });
+      setMaskResult(result);
+    } catch { setMaskResult(null); }
+    setLoading(false);
+  };
+
+  const viewTabs: { id: typeof secView; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "fields", label: "PII Registry" },
+    { id: "audit", label: "Vault Audit" },
+    { id: "mask", label: "Mask Preview" },
+  ];
+
+  const badgeColor = (s: string) => {
+    switch (s) {
+      case "pii": return "bg-amber-100 text-amber-800";
+      case "pci": return "bg-red-100 text-red-800";
+      case "secret": return "bg-purple-100 text-purple-800";
+      case "internal": return "bg-blue-100 text-blue-800";
+      default: return "bg-slate-100 text-slate-600";
+    }
+  };
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+      <h2 className="text-lg font-semibold text-slate-800">Security</h2>
+
+      <div className="flex gap-2 border-b border-slate-200 pb-2">
+        {viewTabs.map(t => (
+          <button key={t.id} onClick={() => setSecView(t.id)}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${secView === t.id ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-100"}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {secView === "overview" && status && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="rounded-lg border border-slate-200 p-4 space-y-2">
+            <h3 className="font-medium text-slate-700">Encryption</h3>
+            <div className="flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${status.encryption.enabled ? "bg-green-500" : "bg-red-500"}`} />
+              <span className="text-sm text-slate-600">{status.encryption.algorithm}</span>
+            </div>
+            <p className="text-xs text-slate-500">Key source: {status.encryption.keySource}</p>
+            <p className="text-xs text-slate-500">Field encryption: {status.encryption.fieldEncryptionEnabled ? "Enabled" : "Disabled"}</p>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 p-4 space-y-2">
+            <h3 className="font-medium text-slate-700">PII/PCI Classification</h3>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              <span className="text-sm text-slate-600">{status.piiClassification.totalFields} fields classified</span>
+            </div>
+            <div className="flex gap-3 text-xs text-slate-500">
+              <span>{status.piiClassification.piiFields} PII</span>
+              <span>{status.piiClassification.pciFields} PCI</span>
+              <span>{status.piiClassification.secretFields} Secret</span>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 p-4 space-y-2">
+            <h3 className="font-medium text-slate-700">Vault Audit Trail</h3>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              <span className="text-sm text-slate-600">{status.vaultAudit.totalEntries} audit entries</span>
+            </div>
+            <p className="text-xs text-slate-500">Last access: {status.vaultAudit.lastAccess || "Never"}</p>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 p-4 space-y-2">
+            <h3 className="font-medium text-slate-700">Correlation ID Tracking</h3>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              <span className="text-sm text-slate-600">{status.correlationId.headerName}</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {status.correlationId.propagation.map(p => (
+                <span key={p} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{p}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {secView === "fields" && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-2 px-3 text-slate-600 font-medium">Field</th>
+                <th className="text-left py-2 px-3 text-slate-600 font-medium">Sensitivity</th>
+                <th className="text-left py-2 px-3 text-slate-600 font-medium">Masking Rule</th>
+                <th className="text-left py-2 px-3 text-slate-600 font-medium">Example</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fields.map(f => (
+                <tr key={f.field} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="py-2 px-3 font-mono text-xs">{f.field}</td>
+                  <td className="py-2 px-3">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badgeColor(f.sensitivity)}`}>{f.sensitivity}</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600 text-xs">{f.maskingRule}</td>
+                  <td className="py-2 px-3 font-mono text-xs text-slate-500">{f.example}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {secView === "audit" && (
+        <div className="space-y-3">
+          <p className="text-sm text-slate-500">{auditTotal} total audit entries</p>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-2 px-3 text-slate-600 font-medium">Time</th>
+                  <th className="text-left py-2 px-3 text-slate-600 font-medium">Action</th>
+                  <th className="text-left py-2 px-3 text-slate-600 font-medium">Key</th>
+                  <th className="text-left py-2 px-3 text-slate-600 font-medium">User</th>
+                  <th className="text-left py-2 px-3 text-slate-600 font-medium">Correlation ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditEntries.map(e => (
+                  <tr key={e.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="py-2 px-3 text-xs text-slate-500">{e.timestamp}</td>
+                    <td className="py-2 px-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${e.action === "write" ? "bg-blue-100 text-blue-700" : e.action === "delete" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600"}`}>
+                        {e.action}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3 font-mono text-xs">{e.secret_key}</td>
+                    <td className="py-2 px-3 text-xs text-slate-500">{e.user_id || "-"}</td>
+                    <td className="py-2 px-3 font-mono text-xs text-slate-400">{e.correlation_id.slice(0, 8)}...</td>
+                  </tr>
+                ))}
+                {auditEntries.length === 0 && (
+                  <tr><td colSpan={5} className="py-6 text-center text-sm text-slate-400">No audit entries yet</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {secView === "mask" && (
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">Paste a JSON payload to see how PII fields are masked.</p>
+          <textarea
+            value={maskInput}
+            onChange={e => setMaskInput(e.target.value)}
+            rows={6}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+          <button onClick={runMaskTest} disabled={loading}
+            className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 cursor-pointer">
+            {loading ? "Masking..." : "Test Masking"}
+          </button>
+
+          {maskResult && (
+            <div className="space-y-3">
+              <h4 className="font-medium text-slate-700 text-sm">Masked Output</h4>
+              <pre className="bg-slate-50 rounded-lg p-3 text-xs font-mono overflow-x-auto border border-slate-200">
+                {JSON.stringify(maskResult.masked, null, 2)}
+              </pre>
+              <h4 className="font-medium text-slate-700 text-sm">Field Details</h4>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">Field</th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">Sensitivity</th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">Masked Value</th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">Changed?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {maskResult.details.map(d => (
+                      <tr key={d.field} className="border-b border-slate-100">
+                        <td className="py-2 px-3 font-mono text-xs">{d.field}</td>
+                        <td className="py-2 px-3"><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badgeColor(d.sensitivity)}`}>{d.sensitivity}</span></td>
+                        <td className="py-2 px-3 font-mono text-xs">{d.masked}</td>
+                        <td className="py-2 px-3">{d.wasMasked ? <span className="text-green-600 text-xs font-medium">Masked</span> : <span className="text-slate-400 text-xs">No change</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }

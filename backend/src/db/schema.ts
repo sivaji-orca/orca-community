@@ -77,6 +77,18 @@ function initDb(): Database {
 
   migrateColumn(db, "api_metrics", "workspace_id", "INTEGER DEFAULT 1 REFERENCES workspaces(id)");
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS vault_audit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      correlation_id TEXT NOT NULL,
+      action TEXT NOT NULL CHECK(action IN ('read', 'write', 'delete')),
+      secret_key TEXT NOT NULL,
+      user_id TEXT,
+      ip_address TEXT,
+      timestamp TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
   return db;
 }
 

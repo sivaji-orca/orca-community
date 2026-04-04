@@ -8,6 +8,16 @@ function getWorkspaceId(): string {
   return localStorage.getItem("orca_active_workspace") || "1";
 }
 
+function generateCorrelationId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {}
@@ -16,6 +26,7 @@ async function request<T>(
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "X-Workspace-Id": getWorkspaceId(),
+    "X-Correlation-Id": generateCorrelationId(),
     ...(options.headers as Record<string, string>),
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
