@@ -104,7 +104,7 @@ export function PostmanManager() {
         </div>
         <div className="flex gap-2">
           <button onClick={syncAll} disabled={loading || !workspace?.connected}
-            className="px-4 py-2 bg-indigo-600 text-white text-xs rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium cursor-pointer">
+            className="px-4 py-2 bg-primary text-white text-xs rounded-lg hover:bg-primary-hover disabled:opacity-50 font-medium cursor-pointer">
             {loading ? "Syncing..." : "Sync All to Postman"}
           </button>
           <button onClick={loadData} className="px-3 py-2 bg-slate-200 text-slate-600 text-xs rounded-lg hover:bg-slate-300 cursor-pointer">
@@ -144,7 +144,7 @@ export function PostmanManager() {
                     <button
                       onClick={() => syncProject(entry.projectName)}
                       disabled={syncing === entry.projectName || !workspace?.connected}
-                      className="px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 disabled:opacity-50 cursor-pointer">
+                      className="px-3 py-1 bg-primary text-white text-xs rounded hover:bg-primary-hover disabled:opacity-50 cursor-pointer">
                       {syncing === entry.projectName ? "..." : entry.synced ? "Re-sync" : "Sync"}
                     </button>
                     {entry.synced && entry.collectionUid && (

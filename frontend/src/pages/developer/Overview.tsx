@@ -270,11 +270,11 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
           : "down";
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-slate-50 to-indigo-50/40 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-gradient-to-b from-slate-50 to-primary-bg-subtle/40 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-10">
-        <header className="flex flex-col gap-4 border-b border-indigo-100/80 pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <header className="flex flex-col gap-4 border-b border-primary-bg/80 pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary">
               Orca Community · Developer
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
@@ -288,7 +288,7 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
             type="button"
             onClick={() => void loadOverview()}
             disabled={loading}
-            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-md transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-md transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Refreshing…" : "Refresh"}
           </button>
@@ -314,9 +314,9 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
           const noMetrics = !analyticsSummary || analyticsSummary.totalRequests === 0;
           const isFreshInstall = allUnknown && noMetrics;
           return isFreshInstall ? (
-            <section className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-6 shadow-md">
+            <section className="rounded-2xl border border-primary-bg bg-gradient-to-br from-primary-bg-subtle to-white p-6 shadow-md">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0 mt-0.5">
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
@@ -329,9 +329,9 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
                   <div className="grid gap-3 sm:grid-cols-3">
                     <button
                       onClick={() => onNavigate?.("new-project")}
-                      className="flex items-start gap-3 rounded-xl border border-indigo-200 bg-white p-4 text-left hover:border-indigo-400 hover:shadow-sm transition-all cursor-pointer"
+                      className="flex items-start gap-3 rounded-xl border border-primary-bg bg-white p-4 text-left hover:border-primary-ring hover:shadow-sm transition-all cursor-pointer"
                     >
-                      <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 text-sm font-bold shrink-0">1</span>
+                      <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary-bg text-primary-text text-sm font-bold shrink-0">1</span>
                       <div>
                         <p className="text-sm font-semibold text-slate-800">Create your first API</p>
                         <p className="text-xs text-slate-500 mt-0.5">Scaffold a new MuleSoft project in seconds</p>
@@ -339,7 +339,7 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
                     </button>
                     <button
                       onClick={() => onNavigate?.("deploy")}
-                      className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-indigo-400 hover:shadow-sm transition-all cursor-pointer"
+                      className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-primary-ring hover:shadow-sm transition-all cursor-pointer"
                     >
                       <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 text-slate-600 text-sm font-bold shrink-0">2</span>
                       <div>
@@ -349,7 +349,7 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
                     </button>
                     <button
                       onClick={() => onNavigate?.("monitoring")}
-                      className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-indigo-400 hover:shadow-sm transition-all cursor-pointer"
+                      className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-primary-ring hover:shadow-sm transition-all cursor-pointer"
                     >
                       <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 text-slate-600 text-sm font-bold shrink-0">3</span>
                       <div>
@@ -467,7 +467,7 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
             {salesforce ? (
               <div className="text-sm text-slate-600">
                 <span className="text-slate-500">Org / instance: </span>
-                <span className="font-medium text-indigo-950">{orgDisplayName(salesforce)}</span>
+                <span className="font-medium text-primary-text">{orgDisplayName(salesforce)}</span>
                 {salesforce.username ? (
                   <span className="ml-2 text-slate-500">({salesforce.username})</span>
                 ) : null}
@@ -485,7 +485,7 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
           ) : null}
           <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-md shadow-slate-200/50">
             <table className="min-w-full text-left text-sm">
-              <thead className="bg-indigo-50/80 text-xs font-semibold uppercase tracking-wide text-indigo-900">
+              <thead className="bg-primary-bg-subtle/80 text-xs font-semibold uppercase tracking-wide text-primary-text">
                 <tr>
                   <th className="px-5 py-3">API</th>
                   <th className="px-5 py-3">Local</th>
@@ -552,7 +552,7 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
             </div>
             <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-md shadow-slate-200/50">
               <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Avg Response Time</p>
-              <p className="mt-1 text-2xl font-bold text-indigo-600">{analyticsSummary ? `${analyticsSummary.avgResponseTime.toFixed(0)}ms` : "—"}</p>
+              <p className="mt-1 text-2xl font-bold text-primary">{analyticsSummary ? `${analyticsSummary.avgResponseTime.toFixed(0)}ms` : "—"}</p>
             </div>
           </div>
         </section>

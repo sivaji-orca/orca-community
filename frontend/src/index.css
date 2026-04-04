@@ -1,20 +1,133 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-primary-light: var(--c-primary-light);
+  --color-primary-ring: var(--c-primary-ring);
+  --color-primary-bg: var(--c-primary-bg);
+  --color-primary-bg-subtle: var(--c-primary-bg-subtle);
+  --color-primary-text: var(--c-primary-text);
+
+  --color-surface: var(--c-surface);
+  --color-surface-alt: var(--c-surface-alt);
+  --color-surface-raised: var(--c-surface-raised);
+  --color-border: var(--c-border);
+  --color-text: var(--c-text);
+  --color-text-muted: var(--c-text-muted);
+}
+
 :root {
-  --color-primary: #6366f1;
-  --color-primary-dark: #4f46e5;
-  --color-surface: #ffffff;
-  --color-surface-alt: #f8fafc;
-  --color-border: #e2e8f0;
-  --color-text: #1e293b;
-  --color-text-muted: #64748b;
+  /* Honey / Mustard Yellow — default accent */
+  --c-primary: #b45309;
+  --c-primary-hover: #92400e;
+  --c-primary-light: #d97706;
+  --c-primary-ring: #fbbf24;
+  --c-primary-bg: #fef3c7;
+  --c-primary-bg-subtle: #fffbeb;
+  --c-primary-text: #78350f;
+
+  /* Surfaces — light mode */
+  --c-surface: #ffffff;
+  --c-surface-alt: #f8fafc;
+  --c-surface-raised: #ffffff;
+  --c-border: #e2e8f0;
+  --c-text: #1e293b;
+  --c-text-muted: #64748b;
+
   --color-success: #22c55e;
   --color-danger: #ef4444;
   --color-warning: #f59e0b;
 }
 
+/* ── Dark mode ───────────────────────────────────────────── */
+.dark {
+  --c-primary-bg: color-mix(in srgb, var(--c-primary) 18%, #0f172a);
+  --c-primary-bg-subtle: color-mix(in srgb, var(--c-primary) 8%, #0f172a);
+
+  --c-surface: #0f172a;
+  --c-surface-alt: #1e293b;
+  --c-surface-raised: #1e293b;
+  --c-border: #334155;
+  --c-text: #f1f5f9;
+  --c-text-muted: #94a3b8;
+}
+
+/* ── Accent presets ──────────────────────────────────────── */
+.accent-honey {
+  --c-primary: #b45309;
+  --c-primary-hover: #92400e;
+  --c-primary-light: #d97706;
+  --c-primary-ring: #fbbf24;
+  --c-primary-bg: #fef3c7;
+  --c-primary-bg-subtle: #fffbeb;
+  --c-primary-text: #78350f;
+}
+
+.accent-ocean {
+  --c-primary: #0e7490;
+  --c-primary-hover: #155e75;
+  --c-primary-light: #06b6d4;
+  --c-primary-ring: #67e8f9;
+  --c-primary-bg: #cffafe;
+  --c-primary-bg-subtle: #ecfeff;
+  --c-primary-text: #164e63;
+}
+
+.accent-indigo {
+  --c-primary: #4f46e5;
+  --c-primary-hover: #4338ca;
+  --c-primary-light: #6366f1;
+  --c-primary-ring: #a5b4fc;
+  --c-primary-bg: #e0e7ff;
+  --c-primary-bg-subtle: #eef2ff;
+  --c-primary-text: #3730a3;
+}
+
+.accent-rose {
+  --c-primary: #be123c;
+  --c-primary-hover: #9f1239;
+  --c-primary-light: #e11d48;
+  --c-primary-ring: #fda4af;
+  --c-primary-bg: #ffe4e6;
+  --c-primary-bg-subtle: #fff1f2;
+  --c-primary-text: #881337;
+}
+
+.accent-emerald {
+  --c-primary: #047857;
+  --c-primary-hover: #065f46;
+  --c-primary-light: #059669;
+  --c-primary-ring: #6ee7b7;
+  --c-primary-bg: #d1fae5;
+  --c-primary-bg-subtle: #ecfdf5;
+  --c-primary-text: #064e3b;
+}
+
+/* Dark mode overrides for accent backgrounds */
+.dark.accent-ocean,
+.dark .accent-ocean {
+  --c-primary-bg: color-mix(in srgb, #0e7490 18%, #0f172a);
+  --c-primary-bg-subtle: color-mix(in srgb, #0e7490 8%, #0f172a);
+}
+.dark.accent-indigo,
+.dark .accent-indigo {
+  --c-primary-bg: color-mix(in srgb, #4f46e5 18%, #0f172a);
+  --c-primary-bg-subtle: color-mix(in srgb, #4f46e5 8%, #0f172a);
+}
+.dark.accent-rose,
+.dark .accent-rose {
+  --c-primary-bg: color-mix(in srgb, #be123c 18%, #0f172a);
+  --c-primary-bg-subtle: color-mix(in srgb, #be123c 8%, #0f172a);
+}
+.dark.accent-emerald,
+.dark .accent-emerald {
+  --c-primary-bg: color-mix(in srgb, #047857 18%, #0f172a);
+  --c-primary-bg-subtle: color-mix(in srgb, #047857 8%, #0f172a);
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: #f1f5f9;
-  color: var(--color-text);
+  background-color: var(--c-surface-alt);
+  color: var(--c-text);
 }

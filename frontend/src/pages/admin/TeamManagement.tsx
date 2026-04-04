@@ -73,7 +73,7 @@ export function TeamManagement() {
         !showForm && (
           <button
             onClick={() => { setShowForm(true); setEditId(null); setForm({ username: "", password: "", role: "developer" }); }}
-            className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+            className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover transition-colors cursor-pointer"
           >
             Add Member
           </button>
@@ -95,7 +95,7 @@ export function TeamManagement() {
               placeholder="Username"
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
-              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 outline-none"
+              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-primary outline-none"
               required
             />
             <input
@@ -103,20 +103,20 @@ export function TeamManagement() {
               placeholder={editId ? "New password (optional)" : "Password"}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 outline-none"
+              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-primary outline-none"
               required={!editId}
             />
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 outline-none"
+              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-primary outline-none"
             >
               <option value="developer">Developer</option>
               <option value="administrator">Administrator</option>
             </select>
           </div>
           <div className="flex gap-2">
-            <button type="submit" className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 cursor-pointer">
+            <button type="submit" className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover cursor-pointer">
               {editId ? "Update" : "Create"}
             </button>
             <button
@@ -157,7 +157,7 @@ export function TeamManagement() {
                 <td className="py-3 px-2 text-slate-500">{m.created_by || "—"}</td>
                 <td className="py-3 px-2 text-slate-500">{m.created_at}</td>
                 <td className="py-3 px-2 text-right">
-                  <button onClick={() => startEdit(m)} className="text-indigo-600 hover:text-indigo-700 mr-3 cursor-pointer">
+                  <button onClick={() => startEdit(m)} className="text-primary hover:text-primary-hover mr-3 cursor-pointer">
                     Edit
                   </button>
                   {m.username !== "sivaji" && (

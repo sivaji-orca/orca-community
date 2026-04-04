@@ -79,7 +79,7 @@ export function LogViewer() {
         <div className="flex gap-1">
           {["", "ERROR", "WARN", "INFO", "DEBUG"].map((l) => (
             <button key={l} onClick={() => setLevel(l)}
-              className={`px-2 py-1 text-xs rounded cursor-pointer ${level === l ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+              className={`px-2 py-1 text-xs rounded cursor-pointer ${level === l ? "bg-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
               {l || "ALL"}
             </button>
           ))}

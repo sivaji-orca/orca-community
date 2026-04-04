@@ -85,7 +85,7 @@ export function SecretsManager() {
         !showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 cursor-pointer"
+            className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover cursor-pointer"
           >
             Add Secret
           </button>
@@ -107,7 +107,7 @@ export function SecretsManager() {
               placeholder="Key (e.g. github_token)"
               value={form.key}
               onChange={(e) => setForm({ ...form, key: e.target.value })}
-              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 outline-none"
+              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-primary outline-none"
               required
             />
             <input
@@ -115,13 +115,13 @@ export function SecretsManager() {
               placeholder="Value"
               value={form.value}
               onChange={(e) => setForm({ ...form, value: e.target.value })}
-              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 outline-none"
+              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-primary outline-none"
               required
             />
             <select
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 outline-none"
+              className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-primary outline-none"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -129,7 +129,7 @@ export function SecretsManager() {
             </select>
           </div>
           <div className="flex gap-2">
-            <button type="submit" className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 cursor-pointer">
+            <button type="submit" className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover cursor-pointer">
               Save
             </button>
             <button
@@ -160,7 +160,7 @@ export function SecretsManager() {
                     <div>
                       <span className="font-mono text-sm text-slate-800">{s.key}</span>
                       {revealedKey === s.key && (
-                        <span className="ml-3 font-mono text-sm text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                        <span className="ml-3 font-mono text-sm text-primary bg-primary-bg-subtle px-2 py-0.5 rounded">
                           {revealedValue}
                         </span>
                       )}
@@ -168,7 +168,7 @@ export function SecretsManager() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleReveal(s.key)}
-                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer"
+                        className="text-xs text-primary hover:text-primary-hover font-medium cursor-pointer"
                       >
                         {revealedKey === s.key ? "Hide" : "Reveal"}
                       </button>

@@ -54,7 +54,7 @@ export function GitManager() {
           <option value="">Select project</option>
           {projects.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
-        {branchInfo && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-mono">{branchInfo.current}</span>}
+        {branchInfo && <span className="text-xs bg-primary-bg text-primary-text px-2 py-1 rounded-full font-mono">{branchInfo.current}</span>}
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">{error}</div>}
@@ -67,10 +67,10 @@ export function GitManager() {
               <h3 className="text-sm font-semibold text-slate-600 mb-3">Branches</h3>
               <div className="space-y-1 max-h-40 overflow-y-auto mb-3">
                 {branchInfo.branches.filter((b) => !b.includes("remotes/")).map((b) => (
-                  <div key={b} className={`flex items-center justify-between px-2 py-1 rounded text-sm ${b === branchInfo.current ? "bg-indigo-100 text-indigo-700 font-medium" : "text-slate-600"}`}>
+                  <div key={b} className={`flex items-center justify-between px-2 py-1 rounded text-sm ${b === branchInfo.current ? "bg-primary-bg text-primary-text font-medium" : "text-slate-600"}`}>
                     <span className="font-mono text-xs">{b}</span>
                     {b !== branchInfo.current && (
-                      <button onClick={() => doAction(() => api.post("/git/checkout", { projectName: selected, branchName: b }))} className="text-xs text-indigo-600 cursor-pointer">Switch</button>
+                      <button onClick={() => doAction(() => api.post("/git/checkout", { projectName: selected, branchName: b }))} className="text-xs text-primary cursor-pointer">Switch</button>
                     )}
                   </div>
                 ))}
@@ -78,7 +78,7 @@ export function GitManager() {
               <div className="flex gap-2">
                 <input value={newBranch} onChange={(e) => setNewBranch(e.target.value)} placeholder="feature-name" className="flex-1 px-2 py-1 rounded border border-slate-300 text-xs outline-none" />
                 <button onClick={() => { doAction(() => api.post("/git/branch", { projectName: selected, branchName: newBranch })); setNewBranch(""); }} disabled={!newBranch}
-                  className="px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 disabled:opacity-50 cursor-pointer">Create</button>
+                  className="px-3 py-1 bg-primary text-white text-xs rounded hover:bg-primary-hover disabled:opacity-50 cursor-pointer">Create</button>
               </div>
             </div>
 
@@ -146,7 +146,7 @@ export function GitManager() {
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {commits.map((c, i) => (
                   <div key={i} className="flex items-center gap-3 text-xs py-1 border-b border-slate-100">
-                    <span className="font-mono text-indigo-600 w-16 shrink-0">{c.hash}</span>
+                    <span className="font-mono text-primary w-16 shrink-0">{c.hash}</span>
                     <span className="flex-1 text-slate-700 truncate">{c.message}</span>
                     <span className="text-slate-400 shrink-0">{c.author}</span>
                   </div>

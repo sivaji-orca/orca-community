@@ -54,7 +54,7 @@ function StepIndicator({ current }: { current: Step }) {
                 done
                   ? "bg-emerald-500 text-white"
                   : active
-                    ? "bg-indigo-600 text-white ring-4 ring-indigo-100"
+                    ? "bg-primary text-white ring-4 ring-primary-bg"
                     : "bg-slate-200 text-slate-500"
               }`}
             >
@@ -145,14 +145,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   ) ?? [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-bg-subtle via-white to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <StepIndicator current={step} />
 
         {/* ===== STEP 1: WELCOME ===== */}
         {step === "welcome" && (
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-10 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-indigo-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-200">
+            <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary-bg">
               <span className="text-white font-bold text-3xl">O</span>
             </div>
             <h1 className="text-3xl font-bold text-slate-800 mb-2">
@@ -167,7 +167,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             </p>
             <button
               onClick={() => setStep("check")}
-              className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 cursor-pointer text-lg"
+              className="px-8 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-hover transition-colors shadow-md shadow-primary-bg cursor-pointer text-lg"
             >
               Let's Go
             </button>
@@ -190,72 +190,100 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
             {checking && !prereqs && (
               <div className="flex items-center justify-center py-12">
-                <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                <div className="w-8 h-8 border-4 border-primary-bg border-t-primary rounded-full animate-spin" />
                 <span className="ml-3 text-slate-500">Scanning your system...</span>
               </div>
             )}
 
-            {prereqs && (
-              <div className="space-y-3 mb-6">
-                {prereqs.prerequisites.map((p) => {
-                  const passed = p.installed && p.meetsMinimum;
-                  return (
-                    <div
-                      key={p.name}
-                      className={`flex items-center justify-between rounded-xl border p-4 transition-all ${
-                        passed
-                          ? "border-emerald-200 bg-emerald-50/50"
-                          : p.required
-                            ? "border-red-200 bg-red-50/50"
-                            : "border-amber-200 bg-amber-50/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
+            {prereqs && (() => {
+              const required = prereqs.prerequisites.filter((p) => p.required);
+              const optional = prereqs.prerequisites.filter((p) => !p.required);
+              return (
+                <>
+                  <div className="space-y-3 mb-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Required</p>
+                    {required.map((p) => {
+                      const passed = p.installed && p.meetsMinimum;
+                      return (
                         <div
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                            passed
-                              ? "bg-emerald-500 text-white"
-                              : p.required
-                                ? "bg-red-500 text-white"
-                                : "bg-amber-400 text-white"
+                          key={p.name}
+                          className={`flex items-center justify-between rounded-xl border p-4 transition-all ${
+                            passed ? "border-emerald-200 bg-emerald-50/50" : "border-red-200 bg-red-50/50"
                           }`}
                         >
-                          {passed ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-slate-800 text-sm flex items-center gap-2">
-                            {p.label}
-                            {!p.required && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-500 font-medium">
-                                optional
-                              </span>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${passed ? "bg-emerald-500 text-white" : "bg-red-500 text-white"}`}>
+                              {passed ? (
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                              ) : (
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-semibold text-slate-800 text-sm">{p.label}</div>
+                              <div className="text-xs text-slate-500">{p.description}</div>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0 ml-4">
+                            {passed ? (
+                              <span className="text-sm font-medium text-emerald-700">{p.version}</span>
+                            ) : (
+                              <span className="text-sm font-medium text-red-600">{p.installed ? `v${p.version} (too old)` : "Missing"}</span>
                             )}
                           </div>
-                          <div className="text-xs text-slate-500">{p.description}</div>
                         </div>
-                      </div>
-                      <div className="text-right shrink-0 ml-4">
-                        {passed ? (
-                          <span className="text-sm font-medium text-emerald-700">{p.version}</span>
-                        ) : (
-                          <span className="text-sm font-medium text-red-600">
-                            {p.installed ? `v${p.version} (too old)` : "Missing"}
-                          </span>
-                        )}
-                      </div>
+                      );
+                    })}
+                  </div>
+
+                  {optional.length > 0 && (
+                    <div className="space-y-3 mb-6">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Optional</p>
+                      {optional.map((p) => {
+                        const passed = p.installed && p.meetsMinimum;
+                        return (
+                          <div
+                            key={p.name}
+                            className={`flex items-center justify-between rounded-xl border p-4 transition-all ${
+                              passed ? "border-emerald-200 bg-emerald-50/50" : "border-sky-200 bg-sky-50/50"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${passed ? "bg-emerald-500 text-white" : "bg-sky-400 text-white"}`}>
+                                {passed ? (
+                                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                ) : (
+                                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div>
+                                <div className="font-semibold text-slate-800 text-sm flex items-center gap-2">
+                                  {p.label}
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-600 font-medium">optional</span>
+                                </div>
+                                <div className="text-xs text-slate-500">{p.description}</div>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0 ml-4">
+                              {passed ? (
+                                <span className="text-sm font-medium text-emerald-700">{p.version}</span>
+                              ) : (
+                                <span className="text-sm font-medium text-sky-600">Not installed yet</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <p className="text-xs text-slate-400 pl-1">
+                        These are downloaded automatically when you run <code className="bg-slate-100 px-1 rounded">./scripts/setup.sh</code>. You can explore the dashboard without them.
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  )}
+                </>
+              );
+            })()}
 
             {prereqs && prereqs.requiredPassed && (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 mb-6 flex items-center gap-3">
@@ -293,7 +321,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 {prereqs?.requiredPassed ? (
                   <button
                     onClick={() => setStep("configure")}
-                    className="px-6 py-2 bg-indigo-600 text-white text-sm rounded-lg font-semibold hover:bg-indigo-700 cursor-pointer"
+                    className="px-6 py-2 bg-primary text-white text-sm rounded-lg font-semibold hover:bg-primary-hover cursor-pointer"
                   >
                     Continue
                   </button>
@@ -321,61 +349,67 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               Run these commands in your terminal, then come back and re-check.
             </p>
 
-            <div className="space-y-4 mb-6">
-              {[...failingRequired, ...failingOptional].map((p) => {
-                const guide = guides[p.name];
-                const osKey = prereqs?.os || "macos";
-                const command = p.installCommand[osKey] || Object.values(p.installCommand)[0];
-
-                return (
-                  <div key={p.name} className="rounded-xl border border-slate-200 p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
+            {failingRequired.length > 0 && (
+              <div className="space-y-4 mb-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-red-500">Required — install these first</p>
+                {failingRequired.map((p) => {
+                  const guide = guides[p.name];
+                  const osKey = prereqs?.os || "macos";
+                  const command = p.installCommand[osKey] || Object.values(p.installCommand)[0];
+                  return (
+                    <div key={p.name} className="rounded-xl border border-red-200 bg-red-50/30 p-5">
+                      <div className="flex items-center justify-between mb-3">
                         <span className="font-semibold text-slate-800">{p.label}</span>
-                        {p.required && (
-                          <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-medium">
-                            required
-                          </span>
+                        {!guide && (
+                          <button onClick={() => fetchGuide(p.name)} disabled={loadingGuide === p.name} className="text-xs text-primary hover:text-primary-hover font-medium cursor-pointer">
+                            {loadingGuide === p.name ? "Loading..." : "More details"}
+                          </button>
                         )}
                       </div>
-                      {!guide && (
-                        <button
-                          onClick={() => fetchGuide(p.name)}
-                          disabled={loadingGuide === p.name}
-                          className="text-xs text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer"
-                        >
-                          {loadingGuide === p.name ? "Loading..." : "More details"}
-                        </button>
+                      <div className="bg-slate-900 rounded-lg p-3 flex items-center justify-between gap-3">
+                        <code className="text-sm text-emerald-400 font-mono break-all">{command}</code>
+                        <CopyButton text={command} />
+                      </div>
+                      {guide && (
+                        <div className="mt-3 space-y-1.5">
+                          {guide.steps.map((s, i) => (
+                            <p key={i} className="text-xs text-slate-600 flex gap-2">
+                              <span className="text-slate-400 shrink-0">{i + 1}.</span>
+                              <span className="whitespace-pre-wrap">{s}</span>
+                            </p>
+                          ))}
+                          <a href={guide.docs} target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-primary hover:text-primary-hover mt-1">Official docs &rarr;</a>
+                        </div>
                       )}
                     </div>
+                  );
+                })}
+              </div>
+            )}
 
-                    <div className="bg-slate-900 rounded-lg p-3 flex items-center justify-between gap-3">
-                      <code className="text-sm text-emerald-400 font-mono break-all">{command}</code>
-                      <CopyButton text={command} />
-                    </div>
-
-                    {guide && (
-                      <div className="mt-3 space-y-1.5">
-                        {guide.steps.map((s, i) => (
-                          <p key={i} className="text-xs text-slate-600 flex gap-2">
-                            <span className="text-slate-400 shrink-0">{i + 1}.</span>
-                            <span className="whitespace-pre-wrap">{s}</span>
-                          </p>
-                        ))}
-                        <a
-                          href={guide.docs}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block text-xs text-indigo-600 hover:text-indigo-700 mt-1"
-                        >
-                          Official docs &rarr;
-                        </a>
+            {failingOptional.length > 0 && (
+              <details className="mb-6 rounded-xl border border-sky-200 bg-sky-50/30">
+                <summary className="px-5 py-3 cursor-pointer text-sm font-medium text-sky-700 hover:text-sky-800">
+                  Optional tools ({failingOptional.length} not installed) — expand for install commands
+                </summary>
+                <div className="px-5 pb-5 space-y-4 pt-2">
+                  <p className="text-xs text-slate-500">These are auto-downloaded by <code className="bg-slate-100 px-1 rounded">./scripts/setup.sh</code>. Install them later when you need local Mule Runtime.</p>
+                  {failingOptional.map((p) => {
+                    const osKey = prereqs?.os || "macos";
+                    const command = p.installCommand[osKey] || Object.values(p.installCommand)[0];
+                    return (
+                      <div key={p.name} className="rounded-lg border border-sky-100 bg-white p-4">
+                        <span className="font-semibold text-slate-800 text-sm">{p.label}</span>
+                        <div className="bg-slate-900 rounded-lg p-3 mt-2 flex items-center justify-between gap-3">
+                          <code className="text-sm text-emerald-400 font-mono break-all">{command}</code>
+                          <CopyButton text={command} />
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              </details>
+            )}
 
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 mb-6">
               <p className="text-sm text-slate-600">
@@ -394,7 +428,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </button>
               <button
                 onClick={() => setStep("check")}
-                className="px-6 py-2 bg-indigo-600 text-white text-sm rounded-lg font-semibold hover:bg-indigo-700 cursor-pointer"
+                className="px-6 py-2 bg-primary text-white text-sm rounded-lg font-semibold hover:bg-primary-hover cursor-pointer"
               >
                 Re-check Prerequisites
               </button>
@@ -450,7 +484,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </button>
               <button
                 onClick={() => setStep("ready")}
-                className="px-6 py-2 bg-indigo-600 text-white text-sm rounded-lg font-semibold hover:bg-indigo-700 cursor-pointer"
+                className="px-6 py-2 bg-primary text-white text-sm rounded-lg font-semibold hover:bg-primary-hover cursor-pointer"
               >
                 Continue
               </button>
@@ -491,7 +525,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             <div className="space-y-3">
               <button
                 onClick={onComplete}
-                className="w-full max-w-sm px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 cursor-pointer text-lg"
+                className="w-full max-w-sm px-8 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-hover transition-colors shadow-md shadow-primary-bg cursor-pointer text-lg"
               >
                 Go to Dashboard
               </button>

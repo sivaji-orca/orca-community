@@ -114,7 +114,7 @@ export function ProjectScaffold() {
           type="text"
           value={projectName}
           onChange={(e) => setProjectName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
-          className="px-4 py-2 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 outline-none w-64"
+          className="px-4 py-2 rounded-lg border border-slate-300 text-sm focus:border-primary outline-none w-64"
           disabled={completedSteps.size > 0}
         />
         {existingProjects.length > 0 && (
@@ -138,7 +138,7 @@ export function ProjectScaffold() {
               isStepComplete(step.id)
                 ? "bg-green-100 text-green-700 border-green-200"
                 : isStepCurrent(step.id)
-                ? "bg-indigo-100 text-indigo-700 border-indigo-200"
+                ? "bg-primary-bg text-primary-text border-primary-bg"
                 : "bg-slate-50 text-slate-400 border-slate-200"
             }`}
           >
@@ -152,7 +152,7 @@ export function ProjectScaffold() {
         <button
           onClick={executeStep}
           disabled={loading || !projectName}
-          className="px-6 py-2.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium cursor-pointer mb-6"
+          className="px-6 py-2.5 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover disabled:opacity-50 font-medium cursor-pointer mb-6"
         >
           {loading ? "Running..." : `Execute: ${STEPS.find((s) => s.id === currentStep)?.label}`}
         </button>

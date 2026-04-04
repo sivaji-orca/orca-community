@@ -52,7 +52,7 @@ function Spinner({ label }: { label?: string }) {
   return (
     <div className="flex items-center gap-2 text-sm text-slate-600">
       <span
-        className="inline-block size-5 shrink-0 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"
+        className="inline-block size-5 shrink-0 rounded-full border-2 border-primary border-t-transparent animate-spin"
         aria-hidden
       />
       {label ? <span>{label}</span> : null}
@@ -219,7 +219,7 @@ export function Deploy() {
             onClick={() => setActiveSection(id)}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               activeSection === id
-                ? "bg-white text-indigo-700 shadow-md ring-1 ring-indigo-100"
+                ? "bg-white text-primary-text shadow-md ring-1 ring-primary-bg"
                 : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
             }`}
           >
@@ -240,7 +240,7 @@ export function Deploy() {
                 type="button"
                 disabled={localActionLoading}
                 onClick={() => void handleStartRuntime()}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 shadow-sm"
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary-hover disabled:opacity-50 shadow-sm"
               >
                 {localActionLoading ? "Working…" : "Start"}
               </button>
@@ -256,7 +256,7 @@ export function Deploy() {
                 type="button"
                 disabled={localLoading}
                 onClick={() => void fetchLocal()}
-                className="px-4 py-2 text-sm font-medium rounded-lg text-indigo-700 bg-indigo-50 hover:bg-indigo-100 ring-1 ring-indigo-100 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium rounded-lg text-primary-text bg-primary-bg-subtle hover:bg-primary-bg ring-1 ring-primary-bg disabled:opacity-50"
               >
                 Refresh
               </button>
@@ -264,7 +264,7 @@ export function Deploy() {
           </div>
 
           {localMessage ? (
-            <div className="text-sm text-indigo-800 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+            <div className="text-sm text-primary-text bg-primary-bg-subtle border border-primary-bg rounded-xl px-4 py-3">
               {localMessage}
             </div>
           ) : null}
@@ -358,7 +358,7 @@ export function Deploy() {
               type="button"
               disabled={cloudLoading}
               onClick={() => void fetchCloud()}
-              className="text-sm font-medium px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 ring-1 ring-indigo-100 disabled:opacity-50"
+              className="text-sm font-medium px-3 py-1.5 rounded-lg bg-primary-bg-subtle text-primary-text hover:bg-primary-bg ring-1 ring-primary-bg disabled:opacity-50"
             >
               Refresh
             </button>
@@ -426,7 +426,7 @@ export function Deploy() {
               type="button"
               disabled={envLoading}
               onClick={() => void fetchEnvironments()}
-              className="text-sm font-medium px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 ring-1 ring-indigo-100 disabled:opacity-50"
+              className="text-sm font-medium px-3 py-1.5 rounded-lg bg-primary-bg-subtle text-primary-text hover:bg-primary-bg ring-1 ring-primary-bg disabled:opacity-50"
             >
               Refresh
             </button>

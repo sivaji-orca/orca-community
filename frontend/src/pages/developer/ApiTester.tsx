@@ -54,7 +54,7 @@ export function ApiTester() {
         </select>
         <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
           {(["request", "collection", "history"] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)} className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${tab === t ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-200"}`}>
+            <button key={t} onClick={() => setTab(t)} className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${tab === t ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-200"}`}>
               {t === "request" ? "Request" : t === "collection" ? "Collection" : "History"}
             </button>
           ))}
@@ -70,7 +70,7 @@ export function ApiTester() {
               {["GET", "POST", "PUT", "DELETE", "PATCH"].map((m) => <option key={m}>{m}</option>)}
             </select>
             <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="http://localhost:8081/api/..." className="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-sm outline-none font-mono" />
-            <button onClick={sendRequest} disabled={loading || !url} className="px-5 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium cursor-pointer">
+            <button onClick={sendRequest} disabled={loading || !url} className="px-5 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover disabled:opacity-50 font-medium cursor-pointer">
               {loading ? "Sending..." : "Send"}
             </button>
           </div>
@@ -102,7 +102,7 @@ export function ApiTester() {
       {tab === "collection" && (
         <div>
           <button onClick={runCollection} disabled={loading || !selectedProject}
-            className="px-5 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium cursor-pointer mb-4">
+            className="px-5 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover disabled:opacity-50 font-medium cursor-pointer mb-4">
             {loading ? "Running..." : "Run Collection"}
           </button>
           {collectionResults && (

@@ -1,9 +1,24 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../../api/client";
+import { useTheme, type ThemeMode, type AccentColor } from "../../hooks/useTheme";
 
 const MASK = "••••••••";
 
-type SettingsSubTab = "secrets" | "salesforce" | "team";
+type SettingsSubTab = "secrets" | "salesforce" | "team" | "appearance";
+
+const ACCENT_PRESETS: { id: AccentColor; label: string; swatch: string }[] = [
+  { id: "honey", label: "Honey", swatch: "#b45309" },
+  { id: "ocean", label: "Ocean", swatch: "#0e7490" },
+  { id: "indigo", label: "Indigo", swatch: "#4f46e5" },
+  { id: "rose", label: "Rose", swatch: "#be123c" },
+  { id: "emerald", label: "Emerald", swatch: "#047857" },
+];
+
+const MODE_OPTIONS: { id: ThemeMode; label: string; icon: string }[] = [
+  { id: "light", label: "Light", icon: "☀️" },
+  { id: "dark", label: "Dark", icon: "🌙" },
+  { id: "system", label: "System", icon: "💻" },
+];
 
 type SecretCategory = "anypoint" | "salesforce" | "github" | "postman";
 
@@ -240,6 +255,7 @@ export function Settings() {
     { id: "secrets", label: "Secrets" },
     { id: "salesforce", label: "Salesforce" },
     { id: "team", label: "Team" },
+    { id: "appearance", label: "Appearance" },
   ];
 
   return (
@@ -259,7 +275,7 @@ export function Settings() {
             onClick={() => setSubTab(t.id)}
             className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
               subTab === t.id
-                ? "bg-indigo-600 text-white"
+                ? "bg-primary text-white"
                 : "text-slate-600 hover:bg-slate-100"
             }`}
           >
@@ -276,7 +292,7 @@ export function Settings() {
               <button
                 type="button"
                 onClick={() => setShowSecretForm(true)}
-                className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 cursor-pointer"
+                className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover cursor-pointer"
               >
                 Add secret
               </button>
@@ -301,7 +317,7 @@ export function Settings() {
                   placeholder="Key"
                   value={secretForm.key}
                   onChange={(e) => setSecretForm({ ...secretForm, key: e.target.value })}
-                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                   required
                 />
                 <input
@@ -309,13 +325,13 @@ export function Settings() {
                   placeholder="Value"
                   value={secretForm.value}
                   onChange={(e) => setSecretForm({ ...secretForm, value: e.target.value })}
-                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                   required
                 />
                 <select
                   value={secretForm.category}
                   onChange={(e) => setSecretForm({ ...secretForm, category: e.target.value })}
-                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                 >
                   {SECRET_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
@@ -327,7 +343,7 @@ export function Settings() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 cursor-pointer"
+                  className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover cursor-pointer"
                 >
                   Save
                 </button>
@@ -370,7 +386,7 @@ export function Settings() {
                             <button
                               type="button"
                               onClick={() => toggleReveal(s.key)}
-                              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium shrink-0 cursor-pointer"
+                              className="text-xs text-primary hover:text-primary-hover font-medium shrink-0 cursor-pointer"
                             >
                               {revealedKey === s.key ? "Hide" : "Reveal"}
                             </button>
@@ -401,7 +417,7 @@ export function Settings() {
                         <button
                           type="button"
                           onClick={() => toggleReveal(s.key)}
-                          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium shrink-0 cursor-pointer"
+                          className="text-xs text-primary hover:text-primary-hover font-medium shrink-0 cursor-pointer"
                         >
                           {revealedKey === s.key ? "Hide" : "Reveal"}
                         </button>
@@ -520,14 +536,14 @@ export function Settings() {
               value={soql}
               onChange={(e) => setSoql(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm text-slate-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
               placeholder="SELECT Id, Name FROM Account LIMIT 10"
             />
             <button
               type="button"
               onClick={runQuery}
               disabled={queryLoading || !soql.trim()}
-              className="mt-2 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+              className="mt-2 px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover disabled:opacity-50 cursor-pointer"
             >
               {queryLoading ? "Running…" : "Run query"}
             </button>
@@ -577,7 +593,7 @@ export function Settings() {
               <button
                 type="button"
                 onClick={() => setShowTeamForm(true)}
-                className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 cursor-pointer"
+                className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover cursor-pointer"
               >
                 Add member
               </button>
@@ -607,7 +623,7 @@ export function Settings() {
                   placeholder="Username"
                   value={teamForm.username}
                   onChange={(e) => setTeamForm({ ...teamForm, username: e.target.value })}
-                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                   required
                 />
                 <input
@@ -615,13 +631,13 @@ export function Settings() {
                   placeholder="Password"
                   value={teamForm.password}
                   onChange={(e) => setTeamForm({ ...teamForm, password: e.target.value })}
-                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                   required
                 />
                 <select
                   value={teamForm.role}
                   onChange={(e) => setTeamForm({ ...teamForm, role: e.target.value as TeamRole })}
-                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                 >
                   {TEAM_ROLES.map((r) => (
                     <option key={r} value={r}>
@@ -633,7 +649,7 @@ export function Settings() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 cursor-pointer"
+                  className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover cursor-pointer"
                 >
                   Add member
                 </button>
@@ -675,7 +691,78 @@ export function Settings() {
           )}
         </section>
       )}
+
+      {subTab === "appearance" && <AppearanceTab />}
     </div>
+  );
+}
+
+function AppearanceTab() {
+  const { mode, accent, setMode, setAccent } = useTheme();
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-8">
+      <div>
+        <h2 className="text-lg font-medium text-slate-800 mb-1">Appearance</h2>
+        <p className="text-sm text-slate-500">Customize the look and feel of your dashboard.</p>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-slate-700 mb-3">Mode</h3>
+        <div className="flex gap-3">
+          {MODE_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setMode(opt.id)}
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer ${
+                mode === opt.id
+                  ? "border-primary bg-primary-bg-subtle text-primary-text shadow-sm"
+                  : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              <span className="text-lg">{opt.icon}</span>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-slate-700 mb-3">Accent color</h3>
+        <div className="flex gap-3">
+          {ACCENT_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => setAccent(preset.id)}
+              className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer min-w-[72px] ${
+                accent === preset.id
+                  ? "border-primary shadow-sm bg-primary-bg-subtle"
+                  : "border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              <span
+                className="w-8 h-8 rounded-full shadow-inner ring-2 ring-white"
+                style={{ backgroundColor: preset.swatch }}
+              />
+              <span className="text-xs font-medium text-slate-600">{preset.label}</span>
+              {accent === preset.id && (
+                <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <p className="text-xs text-slate-500">
+          Changes are applied instantly and saved to your browser. They persist across sessions.
+        </p>
+      </div>
+    </section>
   );
 }
 

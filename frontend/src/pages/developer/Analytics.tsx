@@ -54,7 +54,7 @@ export function Analytics() {
         <button onClick={loadData} className="px-3 py-2 bg-slate-200 text-slate-600 text-sm rounded-lg hover:bg-slate-300 cursor-pointer">Refresh</button>
         <div className="flex gap-1 bg-slate-100 rounded-lg p-1 ml-auto">
           {(["overview", "endpoints", "errors"] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)} className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${tab === t ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-200"}`}>
+            <button key={t} onClick={() => setTab(t)} className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${tab === t ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-200"}`}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
           ))}
@@ -63,7 +63,7 @@ export function Analytics() {
 
       {summary && (
         <div className="grid grid-cols-4 gap-3 mb-6">
-          <div className="bg-indigo-50 rounded-lg p-4 text-center"><p className="text-xs text-indigo-500">Total Requests</p><p className="text-2xl font-bold text-indigo-700">{summary.totalRequests}</p></div>
+          <div className="bg-primary-bg-subtle rounded-lg p-4 text-center"><p className="text-xs text-primary">Total Requests</p><p className="text-2xl font-bold text-primary-text">{summary.totalRequests}</p></div>
           <div className="bg-green-50 rounded-lg p-4 text-center"><p className="text-xs text-green-500">Success Rate</p><p className="text-2xl font-bold text-green-700">{summary.successRate}%</p></div>
           <div className="bg-blue-50 rounded-lg p-4 text-center"><p className="text-xs text-blue-500">Avg Response</p><p className="text-2xl font-bold text-blue-700">{summary.avgResponseTime}ms</p></div>
           <div className="bg-red-50 rounded-lg p-4 text-center"><p className="text-xs text-red-500">Errors</p><p className="text-2xl font-bold text-red-700">{summary.errorCount}</p></div>
@@ -82,14 +82,14 @@ export function Analytics() {
                       {t.errors > 0 && (
                         <div className="w-full bg-red-400 rounded-t" style={{ height: `${Math.max((t.errors / maxTotal) * 140, 2)}px` }} />
                       )}
-                      <div className="w-full bg-indigo-500 rounded-t" style={{ height: `${Math.max(((t.total - t.errors) / maxTotal) * 140, 2)}px` }} />
+                      <div className="w-full bg-primary rounded-t" style={{ height: `${Math.max(((t.total - t.errors) / maxTotal) * 140, 2)}px` }} />
                     </div>
                     <span className="text-[9px] text-slate-400 -rotate-45 origin-top-left whitespace-nowrap">{t.hour.split(" ")[1] || t.hour}</span>
                   </div>
                 ))}
               </div>
               <div className="flex gap-4 mt-3 justify-center text-xs">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-indigo-500 rounded" /> Success</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-primary rounded" /> Success</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-400 rounded" /> Errors</span>
               </div>
             </div>
@@ -112,7 +112,7 @@ export function Analytics() {
               <tbody>
                 {endpoints.map((ep, i) => (
                   <tr key={i} className="border-b border-slate-50">
-                    <td className="py-2 px-2"><span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded font-mono">{ep.method}</span></td>
+                    <td className="py-2 px-2"><span className="bg-primary-bg text-primary-text text-xs px-2 py-0.5 rounded font-mono">{ep.method}</span></td>
                     <td className="py-2 px-2 font-mono text-xs">{ep.endpoint}</td>
                     <td className="py-2 px-2">{ep.total_calls}</td>
                     <td className="py-2 px-2 text-slate-500">{Math.round(ep.avg_time)}ms</td>

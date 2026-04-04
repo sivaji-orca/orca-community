@@ -26,7 +26,7 @@ function FileTree({ nodes, onSelect, selected }: { nodes: TreeNode[]; onSelect: 
             </>
           ) : (
             <button onClick={() => onSelect(node.path)}
-              className={`flex items-center gap-1 w-full px-2 py-1 rounded text-left cursor-pointer ${selected === node.path ? "bg-indigo-100 text-indigo-700" : "hover:bg-slate-100 text-slate-600"}`}>
+              className={`flex items-center gap-1 w-full px-2 py-1 rounded text-left cursor-pointer ${selected === node.path ? "bg-primary-bg text-primary-text" : "hover:bg-slate-100 text-slate-600"}`}>
               <span className="text-xs opacity-0">{"\u25B8"}</span>
               <span className="text-slate-400">&#128196;</span>
               <span>{node.name}</span>
@@ -67,13 +67,13 @@ export function ProjectExplorer() {
     <Card title="Project Explorer">
       <div className="flex gap-3 mb-4 items-center">
         <select value={selected} onChange={(e) => e.target.value && loadProject(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-indigo-500 outline-none">
+          className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-primary outline-none">
           <option value="">Select a project</option>
           {projects.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
         {info && (
           <div className="flex gap-3 text-xs text-slate-500">
-            <span>Branch: <span className="font-mono text-indigo-600">{info.branch}</span></span>
+            <span>Branch: <span className="font-mono text-primary">{info.branch}</span></span>
             {info.lastCommit && <span>Last: <span className="font-mono">{info.lastCommit.hash}</span> {info.lastCommit.message}</span>}
           </div>
         )}

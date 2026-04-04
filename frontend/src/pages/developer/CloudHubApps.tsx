@@ -117,7 +117,7 @@ export function CloudHubApps() {
                     href={app.publicUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-indigo-600 hover:text-indigo-800 break-all"
+                    className="text-xs text-primary hover:text-primary-hover break-all"
                   >
                     {app.publicUrl}
                   </a>

@@ -241,7 +241,7 @@ export function Monitoring() {
       onClick={() => setSubTab(tab)}
       className={`px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
         subTab === tab
-          ? "bg-indigo-600 text-white shadow-sm"
+          ? "bg-primary text-white shadow-sm"
           : "text-slate-600 hover:bg-slate-100"
       }`}
     >
@@ -268,7 +268,7 @@ export function Monitoring() {
                 type="checkbox"
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                className="rounded border-slate-300 text-primary focus:ring-primary"
               />
               Auto-refresh (3s)
             </label>
@@ -283,7 +283,7 @@ export function Monitoring() {
             <select
               value={logLevel}
               onChange={(e) => setLogLevel(e.target.value as LogLevelFilter)}
-              className="px-3 py-1.5 rounded-lg border border-slate-300 text-sm text-slate-800 bg-white outline-none focus:ring-2 focus:ring-indigo-500/30"
+              className="px-3 py-1.5 rounded-lg border border-slate-300 text-sm text-slate-800 bg-white outline-none focus:ring-2 focus:ring-primary/30"
             >
               <option value="ALL">ALL</option>
               <option value="INFO">INFO</option>
@@ -295,7 +295,7 @@ export function Monitoring() {
               value={logSearch}
               onChange={(e) => setLogSearch(e.target.value)}
               placeholder="Search logs…"
-              className="flex-1 min-w-[160px] px-3 py-1.5 rounded-lg border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30"
+              className="flex-1 min-w-[160px] px-3 py-1.5 rounded-lg border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
 
@@ -351,8 +351,8 @@ export function Monitoring() {
           ) : metrics ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-indigo-50 to-white p-4">
-                  <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide">
+                <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-primary-bg-subtle to-white p-4">
+                  <p className="text-xs font-medium text-primary uppercase tracking-wide">
                     Total Requests
                   </p>
                   <p className="mt-2 text-2xl font-bold text-slate-800">{metrics.totalRequests}</p>
@@ -375,8 +375,8 @@ export function Monitoring() {
                     <span className="text-sm font-normal text-slate-500 ml-1">%</span>
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-indigo-50/50 to-white p-4">
-                  <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide">
+                <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-primary-bg-subtle/50 to-white p-4">
+                  <p className="text-xs font-medium text-primary uppercase tracking-wide">
                     Active APIs
                   </p>
                   <p className="mt-2 text-2xl font-bold text-slate-800">{metrics.activeApis}</p>
@@ -401,7 +401,7 @@ export function Monitoring() {
                         </span>
                         <div className="flex-1 h-7 bg-slate-200 rounded-md overflow-hidden">
                           <div
-                            className="h-full bg-indigo-500 rounded-md transition-[width] duration-300"
+                            className="h-full bg-primary rounded-md transition-[width] duration-300"
                             style={{ width: `${(row.count / maxApiCount) * 100}%` }}
                             title={`${row.count} requests`}
                           />

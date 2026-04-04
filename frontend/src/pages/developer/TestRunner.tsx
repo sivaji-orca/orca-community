@@ -59,7 +59,7 @@ export function TestRunner() {
         </select>
         <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
           {(["python", "munit"] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)} className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${tab === t ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-200"}`}>
+            <button key={t} onClick={() => setTab(t)} className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${tab === t ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-200"}`}>
               {t === "python" ? "Python (pytest)" : "MUnit"}
             </button>
           ))}
@@ -80,7 +80,7 @@ export function TestRunner() {
               </div>
             </div>
             <button onClick={runPython} disabled={!selected || loading === "python"}
-              className="px-5 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium cursor-pointer">
+              className="px-5 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover disabled:opacity-50 font-medium cursor-pointer">
               {loading === "python" ? "Running..." : "Run Python Tests"}
             </button>
           </div>
@@ -128,7 +128,7 @@ export function TestRunner() {
               </div>
             </div>
             <button onClick={runMunit} disabled={!selected || loading === "munit"}
-              className="px-5 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium cursor-pointer">
+              className="px-5 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover disabled:opacity-50 font-medium cursor-pointer">
               {loading === "munit" ? "Running..." : "Run MUnit Tests"}
             </button>
           </div>

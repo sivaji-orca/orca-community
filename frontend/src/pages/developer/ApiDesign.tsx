@@ -149,7 +149,7 @@ function ContractAssetDetails({ contract }: { contract: ApiContract }) {
 
   return (
     <div className="mt-4 pt-4 border-t border-slate-200/80">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-600/90 mb-2">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-primary/90 mb-2">
         Asset details
       </p>
       <dl className="space-y-1.5 text-xs">
@@ -236,7 +236,7 @@ export function ApiDesign() {
                     <h3 className="font-semibold text-slate-900 truncate" title={c.apiName}>
                       {c.apiName}
                     </h3>
-                    <p className="text-sm text-indigo-600 font-medium mt-0.5">
+                    <p className="text-sm text-primary font-medium mt-0.5">
                       {c.apiVersion}
                     </p>
                   </div>
@@ -283,11 +283,11 @@ export function ApiDesign() {
               key={proj.projectId}
               className="rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 overflow-hidden ring-1 ring-slate-900/5"
             >
-              <div className="bg-gradient-to-r from-indigo-50/90 to-slate-50 border-b border-slate-200/80 px-5 py-4">
+              <div className="bg-gradient-to-r from-primary-bg-subtle/90 to-slate-50 border-b border-slate-200/80 px-5 py-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <div>
                     <h3 className="text-base font-semibold text-slate-900">{proj.apiTitle}</h3>
-                    <p className="text-xs text-indigo-700 font-medium mt-0.5">
+                    <p className="text-xs text-primary-text font-medium mt-0.5">
                       {proj.projectId} · port {proj.port} · {proj.role}
                     </p>
                   </div>
@@ -297,7 +297,7 @@ export function ApiDesign() {
                 </div>
                 <p className="mt-3 text-xs text-slate-600">
                   <span className="text-slate-500 font-medium">baseUri</span>{" "}
-                  <code className="ml-1 text-indigo-800 bg-white/70 px-1.5 py-0.5 rounded font-mono text-[11px]">
+                  <code className="ml-1 text-primary-text bg-white/70 px-1.5 py-0.5 rounded font-mono text-[11px]">
                     {proj.baseUri}
                   </code>
                 </p>
