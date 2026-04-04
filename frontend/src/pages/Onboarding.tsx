@@ -113,11 +113,18 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     anypoint_org_id: "",
     github_token: "",
     postman_api_key: "",
+    salesforce_instance_url: "",
+    salesforce_username: "",
+    salesforce_password: "",
+    salesforce_security_token: "",
+    neon_database_url: "",
   });
   const [configSaving, setConfigSaving] = useState(false);
   const [configResult, setConfigResult] = useState<{ success: boolean; message: string; details: string[] } | null>(null);
-  const [configSection, setConfigSection] = useState<"anypoint" | "more">("anypoint");
+  const [configSection, setConfigSection] = useState<"anypoint" | "salesforce" | "neon" | "more">("anypoint");
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
+  const [neonTesting, setNeonTesting] = useState(false);
+  const [neonTestResult, setNeonTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const checkPrereqs = useCallback(async () => {
     setChecking(true);
@@ -166,6 +173,16 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       }
       if (configForm.github_token) body.github = { token: configForm.github_token };
       if (configForm.postman_api_key) body.postman = { api_key: configForm.postman_api_key };
+      if (configForm.salesforce_instance_url || configForm.salesforce_username || configForm.salesforce_password || configForm.salesforce_security_token) {
+        body.salesforce = {};
+        if (configForm.salesforce_instance_url) body.salesforce.instance_url = configForm.salesforce_instance_url;
+        if (configForm.salesforce_username) body.salesforce.username = configForm.salesforce_username;
+        if (configForm.salesforce_password) body.salesforce.password = configForm.salesforce_password;
+        if (configForm.salesforce_security_token) body.salesforce.security_token = configForm.salesforce_security_token;
+      }
+      if (configForm.neon_database_url) {
+        body.neon = { database_url: configForm.neon_database_url };
+      }
 
       const res = await fetch("/api/system/configure", {
         method: "POST",
@@ -499,8 +516,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             <div className="flex gap-1 mb-6 bg-slate-100 rounded-lg p-1">
               {(
                 [
-                  { id: "anypoint" as const, label: "Anypoint Platform", icon: "M" },
-                  { id: "more" as const, label: "GitHub & Postman", icon: "+" },
+                  { id: "anypoint" as const, label: "Anypoint", icon: "M" },
+                  { id: "salesforce" as const, label: "Salesforce", icon: "SF" },
+                  { id: "neon" as const, label: "Neon PG", icon: "N" },
+                  { id: "more" as const, label: "Git & PM", icon: "+" },
                 ] as const
               ).map((tab) => (
                 <button
@@ -536,7 +555,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                       anypoint.mulesoft.com
                     </a>
                     {" "}&rarr; Access Management &rarr; Connected Apps &rarr; Create a new app with{" "}
-                    <em>Client Credentials</em> grant type.
+                    <em>Client Credentials</em> grant type.{" "}
+                    <a
+                      href="https://docs.mulesoft.com/access-management/connected-apps-overview"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline font-medium"
+                    >
+                      Full guide
+                    </a>.
                   </p>
                 </div>
 
@@ -588,6 +615,150 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
                   />
                 </div>
+              </div>
+            )}
+
+            {/* Salesforce section */}
+            {configSection === "salesforce" && (
+              <div className="space-y-4 mb-6">
+                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Need a Salesforce Developer account?</strong>{" "}
+                    <a href="https://developer.salesforce.com/signup" target="_blank" rel="noopener noreferrer" className="underline font-medium">Sign up free</a>.
+                    Then go to Setup &rarr; My Personal Information &rarr;{" "}
+                    <a href="https://help.salesforce.com/s/articleView?id=sf.user_security_token.htm" target="_blank" rel="noopener noreferrer" className="underline font-medium">Reset Security Token</a>.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Instance URL</label>
+                  <input
+                    type="text"
+                    placeholder="https://your-org.develop.my.salesforce.com"
+                    value={configForm.salesforce_instance_url}
+                    onChange={(e) => setConfigForm((f) => ({ ...f, salesforce_instance_url: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
+                  <input
+                    type="text"
+                    placeholder="you@example.com"
+                    value={configForm.salesforce_username}
+                    onChange={(e) => setConfigForm((f) => ({ ...f, salesforce_username: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showSecrets["sf_password"] ? "text" : "password"}
+                      placeholder="Your Salesforce password"
+                      value={configForm.salesforce_password}
+                      onChange={(e) => setConfigForm((f) => ({ ...f, salesforce_password: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                    />
+                    <button type="button" onClick={() => toggleSecret("sf_password")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                      {showSecrets["sf_password"] ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Security Token</label>
+                  <div className="relative">
+                    <input
+                      type={showSecrets["sf_token"] ? "text" : "password"}
+                      placeholder="Emailed to you after reset"
+                      value={configForm.salesforce_security_token}
+                      onChange={(e) => setConfigForm((f) => ({ ...f, salesforce_security_token: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                    />
+                    <button type="button" onClick={() => toggleSecret("sf_token")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                      {showSecrets["sf_token"] ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Go to Setup &rarr; Reset My Security Token. Check your email.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Neon PostgreSQL section */}
+            {configSection === "neon" && (
+              <div className="space-y-4 mb-6">
+                <div className="rounded-xl border border-green-200 bg-green-50/50 p-4">
+                  <p className="text-sm text-green-800">
+                    <strong>Need a Neon account?</strong>{" "}
+                    <a href="https://neon.tech" target="_blank" rel="noopener noreferrer" className="underline font-medium">Sign up free at neon.tech</a>{" "}
+                    (no credit card required, 0.5 GB free). Copy your connection string from the Neon dashboard.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Database Connection URL</label>
+                  <div className="relative">
+                    <input
+                      type={showSecrets["neon_url"] ? "text" : "password"}
+                      placeholder="postgresql://user:pass@ep-xxx.region.aws.neon.tech/neondb?sslmode=require"
+                      value={configForm.neon_database_url}
+                      onChange={(e) => setConfigForm((f) => ({ ...f, neon_database_url: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                    />
+                    <button type="button" onClick={() => toggleSecret("neon_url")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                      {showSecrets["neon_url"] ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Find it in your Neon dashboard &rarr; Connection Details &rarr; Connection string.</p>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    setNeonTesting(true);
+                    setNeonTestResult(null);
+                    try {
+                      if (configForm.neon_database_url) {
+                        await fetch("/api/system/configure", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ neon: { database_url: configForm.neon_database_url } }),
+                        });
+                      }
+                      const res = await fetch("/api/system/test-neon");
+                      const data = await res.json();
+                      setNeonTestResult(data);
+                    } catch {
+                      setNeonTestResult({ success: false, message: "Network error" });
+                    } finally {
+                      setNeonTesting(false);
+                    }
+                  }}
+                  disabled={neonTesting || !configForm.neon_database_url}
+                  className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 cursor-pointer"
+                >
+                  {neonTesting ? "Testing..." : "Test Connection"}
+                </button>
+
+                {neonTestResult && (
+                  <div className={`rounded-lg border p-3 text-sm ${neonTestResult.success ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+                    {neonTestResult.success ? "\u2713" : "\u2717"} {neonTestResult.message}
+                  </div>
+                )}
               </div>
             )}
 

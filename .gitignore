@@ -3,14 +3,17 @@ node_modules/
 backend/node_modules/
 frontend/node_modules/
 
-# Build output
-projects/*/target/
+# Build output & project data
+projects/
 backend/dist/
 frontend/dist/
 
 # Runtime
 softwares/
 *.log
+
+# Workspace data (created at runtime)
+workspaces/
 
 # Config with secrets
 config.yaml
@@ -23,6 +26,7 @@ backend/data/*.db-shm
 backend/data/*.db-wal
 backend/data/postman-sync.json
 backend/data/postman-environments.json
+backend/data/postman-workspace.json
 
 # OS
 .DS_Store

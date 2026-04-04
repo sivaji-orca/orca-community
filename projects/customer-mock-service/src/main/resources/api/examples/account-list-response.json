@@ -1,7 +1,0 @@
-{
-  "total": 2,
-  "accounts": [
-    {"Id": "001xx000003DGbYAAW", "Name": "Acme Corp", "Phone": "555-0100", "Industry": "Technology"},
-    {"Id": "001xx000003DGbZAAW", "Name": "Global Inc", "Phone": "555-0200", "Industry": "Finance"}
-  ]
-}

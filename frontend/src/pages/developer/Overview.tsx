@@ -1,14 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../../api/client";
 
-const API_DEFINITIONS = [
-  { id: "customer-papi", title: "Customer PAPI", port: 8081 },
-  { id: "customer-management-api", title: "Customer Management API", port: 8082 },
-  { id: "customer-sf-sapi", title: "Customer SF SAPI", port: 8083 },
-  { id: "customer-mock-service", title: "Customer Mock Service", port: 8084 },
-] as const;
+interface ApiDefinition {
+  id: string;
+  title: string;
+  port: number;
+}
 
-type ApiId = (typeof API_DEFINITIONS)[number]["id"];
+const FALLBACK_API_DEFINITIONS: ApiDefinition[] = [
+  { id: "sync-process-api", title: "Sync Process API", port: 8081 },
+  { id: "sf-system-api", title: "SF System API", port: 8082 },
+  { id: "db-system-api", title: "DB System API", port: 8083 },
+];
+
+type ApiId = string;
 
 interface ServiceInfo {
   name: string;
@@ -129,11 +134,12 @@ function orgDisplayName(sf: SalesforceHealthResponse): string {
 }
 
 function buildApiStates(
+  defs: ApiDefinition[],
   services: ServiceInfo[],
   healthByPort: Record<number, DirectHealth>
 ): Record<ApiId, ApiCardState> {
   const next = {} as Record<ApiId, ApiCardState>;
-  for (const def of API_DEFINITIONS) {
+  for (const def of defs) {
     const rt = runtimeForPort(services, def.port);
     next[def.id] = {
       direct: healthByPort[def.port] ?? "unknown",
@@ -151,6 +157,7 @@ interface OverviewProps {
 export function Overview({ onNavigate }: OverviewProps = {}) {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
+  const [apiDefs, setApiDefs] = useState<ApiDefinition[]>(FALLBACK_API_DEFINITIONS);
 
   const [runtimeServices, setRuntimeServices] = useState<ServiceInfo[]>([]);
   const [runtimeError, setRuntimeError] = useState("");
@@ -177,6 +184,38 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
     let services: ServiceInfo[] = [];
 
     try {
+      // Build dynamic API definitions from projects + template metadata
+      let currentDefs = FALLBACK_API_DEFINITIONS;
+      try {
+        interface TemplateMeta { id: string; ports: Record<string, number> }
+        const [projects, templates] = await Promise.all([
+          api.get<string[]>("/projects/list"),
+          api.get<TemplateMeta[]>("/projects/templates"),
+        ]);
+        const portMap: Record<string, number> = {};
+        for (const tmpl of templates) {
+          for (const [name, port] of Object.entries(tmpl.ports)) {
+            portMap[name] = port;
+          }
+        }
+        if (projects.length > 0) {
+          const dynamicDefs: ApiDefinition[] = [];
+          const seenPorts = new Set<number>();
+          for (const proj of projects) {
+            const suffix = proj.replace(/^[^-]+-/, "");
+            const port = portMap[suffix] || portMap[proj];
+            if (port && !seenPorts.has(port)) {
+              seenPorts.add(port);
+              dynamicDefs.push({ id: proj, title: proj, port });
+            }
+          }
+          if (dynamicDefs.length > 0) {
+            currentDefs = dynamicDefs;
+          }
+        }
+      } catch { /* use fallback defs */ }
+      setApiDefs(currentDefs);
+
       const [runtimeResult, cloudResult, sfResult, analyticsResult, logStatsResult, recentLogsResult, ...healthOutcomes] = await Promise.allSettled([
         api.get<ServiceInfo[]>("/runtime/status"),
         api.get<CloudHubApp[]>("/anypoint/applications"),
@@ -184,7 +223,7 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
         api.get<AnalyticsSummary>("/analytics/summary?hours=24"),
         api.get<LogStats>("/logs/stats"),
         api.get<LogEntry[]>("/logs?limit=10&level=ERROR,WARN"),
-        ...API_DEFINITIONS.map((d) => probeDirectHealth(d.port)),
+        ...currentDefs.map((d) => probeDirectHealth(d.port)),
       ]);
 
       if (runtimeResult.status === "fulfilled") {
@@ -240,16 +279,16 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
       }
 
       const healthByPort: Record<number, DirectHealth> = {};
-      API_DEFINITIONS.forEach((def, i) => {
+      currentDefs.forEach((def, i) => {
         const outcome = healthOutcomes[i];
         healthByPort[def.port] =
           outcome.status === "fulfilled" ? outcome.value : "unknown";
       });
 
-      setApiStates(buildApiStates(services, healthByPort));
+      setApiStates(buildApiStates(currentDefs, services, healthByPort));
     } catch (err) {
       setPageError(err instanceof Error ? err.message : "Failed to load overview");
-      setApiStates(buildApiStates(services, {}));
+      setApiStates(buildApiStates(apiDefs, services, {}));
     } finally {
       setLoading(false);
     }
@@ -310,7 +349,7 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
         ) : null}
 
         {apiStates && (() => {
-          const allUnknown = API_DEFINITIONS.every((d) => apiStates[d.id]?.direct === "unknown");
+          const allUnknown = apiDefs.every((d) => apiStates[d.id]?.direct === "unknown");
           const noMetrics = !analyticsSummary || analyticsSummary.totalRequests === 0;
           const isFreshInstall = allUnknown && noMetrics;
           return isFreshInstall ? (
@@ -379,7 +418,7 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
             <p className="mb-4 text-xs text-amber-800">{runtimeError}</p>
           ) : null}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {API_DEFINITIONS.map((def) => {
+            {apiDefs.map((def) => {
               const state = apiStates?.[def.id];
               const direct = state?.direct ?? "unknown";
               const rt = runtimeForPort(runtimeServices, def.port);
@@ -493,7 +532,7 @@ export function Overview({ onNavigate }: OverviewProps = {}) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {API_DEFINITIONS.map((def) => {
+                {apiDefs.map((def) => {
                   const st = apiStates?.[def.id];
                   const localOn = localDeploymentHint(st?.direct ?? "unknown", def.port, runtimeServices);
                   const cloudOn = isDeployedOnCloudHub(cloudApps, def.id);

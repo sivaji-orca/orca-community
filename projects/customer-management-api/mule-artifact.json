@@ -1,9 +1,0 @@
-{
-  "minMuleVersion": "4.11.2",
-  "classLoaderModelLoaderDescriptor": {
-    "id": "mule",
-    "attributes": {
-      "exportedResources": []
-    }
-  }
-}

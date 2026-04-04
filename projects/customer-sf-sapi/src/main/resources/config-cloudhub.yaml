@@ -1,9 +1,0 @@
-http:
-  host: "0.0.0.0"
-  port: "8083"
-
-sf:
-  username: "${sf.username}"
-  password: "${sf.password}"
-  securityToken: "${sf.securityToken}"
-  url: "https://login.salesforce.com"

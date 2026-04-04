@@ -400,6 +400,8 @@ interface ConfigureBody {
   anypoint?: { client_id?: string; client_secret?: string; org_id?: string; environment?: string };
   github?: { token?: string; org?: string };
   postman?: { api_key?: string };
+  neon?: { database_url?: string; host?: string; database?: string; username?: string; password?: string };
+  salesforce?: { instance_url?: string; username?: string; password?: string; security_token?: string };
 }
 
 router.post("/configure", (req: Request, res: Response): void => {
@@ -454,6 +456,26 @@ router.post("/configure", (req: Request, res: Response): void => {
       results.push("Postman API key saved to vault");
     }
 
+    if (body.neon) {
+      const { database_url, host, database, username, password } = body.neon;
+      if (database_url) {
+        setSecret("neon_database_url", database_url, "neon");
+        results.push("Neon database URL saved to vault");
+      }
+      if (host) { setSecret("neon_host", host, "neon"); results.push("Neon host saved"); }
+      if (database) { setSecret("neon_database", database, "neon"); results.push("Neon database name saved"); }
+      if (username) { setSecret("neon_username", username, "neon"); results.push("Neon username saved"); }
+      if (password) { setSecret("neon_password", password, "neon"); results.push("Neon password saved to vault"); }
+    }
+
+    if (body.salesforce) {
+      const { instance_url, username, password, security_token } = body.salesforce;
+      if (instance_url) { setSecret("salesforce_instance_url", instance_url, "salesforce"); results.push("Salesforce instance URL saved"); }
+      if (username) { setSecret("salesforce_username", username, "salesforce"); results.push("Salesforce username saved"); }
+      if (password) { setSecret("salesforce_password", password, "salesforce"); results.push("Salesforce password saved to vault"); }
+      if (security_token) { setSecret("salesforce_security_token", security_token, "salesforce"); results.push("Salesforce security token saved to vault"); }
+    }
+
     res.json({
       success: true,
       message: results.length > 0 ? "Configuration saved successfully" : "No credentials provided",
@@ -476,13 +498,40 @@ router.get("/configure/status", (_req: Request, res: Response): void => {
   };
   const github = { token: !!getSecret("github_token") };
   const postman = { api_key: !!getSecret("postman_api_key") };
+  const neon = { database_url: !!getSecret("neon_database_url") };
+  const salesforce = {
+    instance_url: !!getSecret("salesforce_instance_url"),
+    username: !!getSecret("salesforce_username"),
+    password: !!getSecret("salesforce_password"),
+    security_token: !!getSecret("salesforce_security_token"),
+  };
 
   res.json({
     configured: anypoint.client_id && anypoint.client_secret,
     anypoint,
     github,
     postman,
+    neon,
+    salesforce,
   });
+});
+
+router.get("/test-neon", async (_req: Request, res: Response): Promise<void> => {
+  const dbUrl = getSecret("neon_database_url");
+  if (!dbUrl) {
+    res.json({ success: false, message: "Neon database URL not configured. Add it in Settings or Onboarding." });
+    return;
+  }
+  try {
+    const { default: pg } = await import("pg");
+    const client = new pg.Client({ connectionString: dbUrl, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 10000 });
+    await client.connect();
+    const result = await client.query("SELECT 1 as connected");
+    await client.end();
+    res.json({ success: true, message: "Connected to Neon PostgreSQL successfully", data: result.rows });
+  } catch (err) {
+    res.json({ success: false, message: `Connection failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
 });
 
 export default router;

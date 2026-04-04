@@ -43,6 +43,12 @@ function run(cmd: string, cwd: string): string {
   return execSync(cmd, { cwd, timeout: 30000 }).toString().trim();
 }
 
+export function getWorkspacePath(workspaceName = "Default"): string {
+  const dir = getWorkspaceProjectsDir(workspaceName);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
 export function getProjectPath(projectName: string, workspaceName = "Default"): string {
   return path.join(getWorkspaceProjectsDir(workspaceName), projectName);
 }

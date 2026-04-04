@@ -32,6 +32,15 @@ github:
 postman:
   api_key: ""                       # Postman API key
 
+# Neon PostgreSQL
+neon:
+  database_url: ""                  # e.g., postgresql://user:pass@ep-xxx.region.aws.neon.tech/dbname?sslmode=require
+  host: ""                          # e.g., ep-xxx.region.aws.neon.tech
+  database: ""                      # e.g., neondb
+  username: ""
+  password: ""
+  ssl: true
+
 # Mule Runtime
 mule:
   runtime_version: "4.11.2"

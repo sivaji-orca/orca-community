@@ -87,6 +87,81 @@ export function generateCollection(projectName: string, basePath: string = "/api
   return collection;
 }
 
+function makeRequest(name: string, method: string, baseUrlVar: string, pathStr: string, body?: Record<string, any>): Record<string, any> {
+  const pathParts = pathStr.split("/").filter(Boolean);
+  const req: Record<string, any> = {
+    name,
+    request: {
+      method,
+      header: [{ key: "Content-Type", value: "application/json" }],
+      url: {
+        raw: `{{${baseUrlVar}}}${pathStr}`,
+        host: [`{{${baseUrlVar}}}`],
+        path: pathParts,
+      },
+    },
+  };
+  if (body) {
+    req.request.body = { mode: "raw", raw: JSON.stringify(body, null, 2) };
+  }
+  return req;
+}
+
+export function generateSyncCollections(prefix: string, outputDir: string): string[] {
+  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+  const generated: string[] = [];
+
+  const sfCollection = {
+    info: { name: `${prefix}-sf-system-api`, schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+    variable: [{ key: "sfBaseUrl", value: "http://localhost:8082", description: "SF System API base" }],
+    item: [
+      { name: "Contacts", item: [
+        makeRequest("GET All Contacts", "GET", "sfBaseUrl", "/api/contacts"),
+        makeRequest("GET Contact by ID", "GET", "sfBaseUrl", "/api/contacts/003XXXXXXXXXXXXXXX"),
+        makeRequest("Upsert Contact", "POST", "sfBaseUrl", "/api/contacts", { FirstName: "Jane", LastName: "Doe", Email: "jane.doe@example.com", Phone: "555-1234" }),
+      ]},
+      { name: "Accounts", item: [
+        makeRequest("GET All Accounts", "GET", "sfBaseUrl", "/api/accounts"),
+        makeRequest("GET Account by ID", "GET", "sfBaseUrl", "/api/accounts/001XXXXXXXXXXXXXXX"),
+        makeRequest("Upsert Account", "POST", "sfBaseUrl", "/api/accounts", { Name: "Acme Corp", Industry: "Technology", Phone: "555-5678", Website: "https://acme.example.com" }),
+      ]},
+    ],
+  };
+  fs.writeFileSync(path.join(outputDir, `${prefix}-sf-system-api-collection.json`), JSON.stringify(sfCollection, null, 2));
+  generated.push(`${prefix}-sf-system-api-collection.json`);
+
+  const dbCollection = {
+    info: { name: `${prefix}-db-system-api`, schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+    variable: [{ key: "dbBaseUrl", value: "http://localhost:8083", description: "DB System API base" }],
+    item: [
+      { name: "Health", item: [makeRequest("Health Check", "GET", "dbBaseUrl", "/api/health")] },
+      { name: "Contacts", item: [
+        makeRequest("GET All Contacts", "GET", "dbBaseUrl", "/api/contacts"),
+        makeRequest("GET Contacts Since", "GET", "dbBaseUrl", "/api/contacts?since=2024-01-01T00:00:00Z"),
+        makeRequest("Upsert Contact", "POST", "dbBaseUrl", "/api/contacts", { sf_id: "003XXXXXXXXXXXXXXX", first_name: "Jane", last_name: "Doe", email: "jane.doe@example.com", phone: "555-1234", sync_status: "synced" }),
+      ]},
+      { name: "Accounts", item: [
+        makeRequest("GET All Accounts", "GET", "dbBaseUrl", "/api/accounts"),
+        makeRequest("Upsert Account", "POST", "dbBaseUrl", "/api/accounts", { sf_id: "001XXXXXXXXXXXXXXX", name: "Acme Corp", industry: "Technology", phone: "555-5678", website: "https://acme.example.com", sync_status: "synced" }),
+      ]},
+    ],
+  };
+  fs.writeFileSync(path.join(outputDir, `${prefix}-db-system-api-collection.json`), JSON.stringify(dbCollection, null, 2));
+  generated.push(`${prefix}-db-system-api-collection.json`);
+
+  const syncCollection = {
+    info: { name: `${prefix}-sync-process-api`, schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+    variable: [{ key: "syncBaseUrl", value: "http://localhost:8081", description: "Sync Process API base" }],
+    item: [
+      { name: "Health", item: [makeRequest("Sync Health Check", "GET", "syncBaseUrl", "/api/health")] },
+    ],
+  };
+  fs.writeFileSync(path.join(outputDir, `${prefix}-sync-process-api-collection.json`), JSON.stringify(syncCollection, null, 2));
+  generated.push(`${prefix}-sync-process-api-collection.json`);
+
+  return generated;
+}
+
 export async function getOrCreateWorkspace(): Promise<{ workspaceId: string; workspaceName: string }> {
   const existing = loadWorkspaceConfig();
   if (existing) {
