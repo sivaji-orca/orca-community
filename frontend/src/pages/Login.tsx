@@ -2,9 +2,10 @@ import { useState } from "react";
 
 interface LoginProps {
   onLogin: (username: string, password: string) => Promise<void>;
+  onRestartOnboarding?: () => void;
 }
 
-export function Login({ onLogin }: LoginProps) {
+export function Login({ onLogin, onRestartOnboarding }: LoginProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -87,6 +88,23 @@ export function Login({ onLogin }: LoginProps) {
             </p>
           </div>
         </div>
+
+        {onRestartOnboarding && (
+          <div className="mt-6 text-center space-y-2">
+            <button
+              onClick={onRestartOnboarding}
+              className="text-sm text-primary hover:text-primary-hover font-medium cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Run Setup Wizard Again
+            </button>
+            <p className="text-xs text-slate-400">
+              Re-check prerequisites, configure credentials, or review your setup.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

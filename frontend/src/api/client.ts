@@ -4,6 +4,10 @@ function getToken(): string | null {
   return localStorage.getItem("orca_token");
 }
 
+function getWorkspaceId(): string {
+  return localStorage.getItem("orca_active_workspace") || "1";
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {}
@@ -11,6 +15,7 @@ async function request<T>(
   const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "X-Workspace-Id": getWorkspaceId(),
     ...(options.headers as Record<string, string>),
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -38,5 +43,7 @@ export const api = {
     request<T>(path, { method: "POST", body: JSON.stringify(body) }),
   put: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "PUT", body: JSON.stringify(body) }),
+  patch: <T>(path: string, body?: unknown) =>
+    request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
 };

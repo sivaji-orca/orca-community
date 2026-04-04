@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { authenticateToken } from "../middleware/auth";
-import { getProjectPath, getCurrentBranch, getGitLog, getGitStatus } from "../services/git";
+import { getProjectPath, getCurrentBranch, getGitLog, getGitStatus, listProjects } from "../services/git";
 import { syncProjectToPostman, getWorkspaceStatus } from "../services/postman";
 import fs from "fs";
 import path from "path";
@@ -32,7 +32,8 @@ router.post("/scaffold", async (req: Request, res: Response): Promise<void> => {
     const { projectName } = req.body;
     if (!projectName) { res.status(400).json({ error: "projectName is required" }); return; }
 
-    const projectPath = getProjectPath(projectName);
+    const wsName = req.workspaceName;
+    const projectPath = getProjectPath(projectName, wsName);
     if (fs.existsSync(projectPath) && fs.readdirSync(projectPath).length > 0) {
       res.status(409).json({ error: `Project '${projectName}' already exists and is not empty` });
       return;
@@ -197,15 +198,12 @@ class TestHelloApi:
   }
 });
 
-router.get("/list", (_req: Request, res: Response): void => {
-  const projectsDir = path.join(import.meta.dir, "../../../projects");
-  if (!fs.existsSync(projectsDir)) { res.json([]); return; }
-  const projects = fs.readdirSync(projectsDir).filter((f) => fs.statSync(path.join(projectsDir, f)).isDirectory());
-  res.json(projects);
+router.get("/list", (req: Request, res: Response): void => {
+  res.json(listProjects(req.workspaceName));
 });
 
 router.get("/:name/tree", (req: Request, res: Response): void => {
-  const projectPath = getProjectPath(req.params.name);
+  const projectPath = getProjectPath(req.params.name, req.workspaceName);
   if (!fs.existsSync(projectPath)) { res.status(404).json({ error: "Project not found" }); return; }
   res.json(buildTree(projectPath));
 });
@@ -213,19 +211,20 @@ router.get("/:name/tree", (req: Request, res: Response): void => {
 router.get("/:name/file", (req: Request, res: Response): void => {
   const filePath = req.query.path as string;
   if (!filePath) { res.status(400).json({ error: "path query param required" }); return; }
-  const fullPath = path.join(getProjectPath(req.params.name), filePath);
+  const fullPath = path.join(getProjectPath(req.params.name, req.workspaceName), filePath);
   if (!fs.existsSync(fullPath)) { res.status(404).json({ error: "File not found" }); return; }
   const content = fs.readFileSync(fullPath, "utf8");
   res.json({ path: filePath, content });
 });
 
 router.get("/:name/info", (req: Request, res: Response): void => {
-  const projectPath = getProjectPath(req.params.name);
+  const wsName = req.workspaceName;
+  const projectPath = getProjectPath(req.params.name, wsName);
   if (!fs.existsSync(projectPath)) { res.status(404).json({ error: "Project not found" }); return; }
   try {
-    const branch = getCurrentBranch(req.params.name);
-    const log = getGitLog(req.params.name, 1);
-    const status = getGitStatus(req.params.name);
+    const branch = getCurrentBranch(req.params.name, wsName);
+    const log = getGitLog(req.params.name, 1, wsName);
+    const status = getGitStatus(req.params.name, wsName);
     res.json({ name: req.params.name, branch, lastCommit: log[0] || null, status, path: projectPath });
   } catch {
     res.json({ name: req.params.name, branch: "unknown", lastCommit: null, status: "", path: projectPath });

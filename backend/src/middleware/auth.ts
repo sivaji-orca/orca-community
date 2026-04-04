@@ -13,6 +13,8 @@ declare global {
   namespace Express {
     interface Request {
       user?: AuthPayload;
+      workspaceId: number;
+      workspaceName: string;
     }
   }
 }
@@ -51,4 +53,17 @@ export function requireRole(...roles: string[]) {
 
 export function signToken(payload: AuthPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: "8h" });
+}
+
+export function resolveWorkspace(req: Request, _res: Response, next: NextFunction): void {
+  const header = req.headers["x-workspace-id"];
+  const wsId = header ? Number(header) : 1;
+  req.workspaceId = isNaN(wsId) || wsId < 1 ? 1 : wsId;
+
+  const { getDb } = require("../db/schema");
+  const db = getDb();
+  const ws = db.query("SELECT name FROM workspaces WHERE id = ?").get(req.workspaceId) as { name: string } | null;
+  req.workspaceName = ws?.name || "Default";
+
+  next();
 }

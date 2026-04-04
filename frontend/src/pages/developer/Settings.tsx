@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../../api/client";
 import { useTheme, type ThemeMode, type AccentColor } from "../../hooks/useTheme";
+import { useWorkspace, type Workspace } from "../../hooks/useWorkspace";
 
 const MASK = "••••••••";
 
-type SettingsSubTab = "secrets" | "salesforce" | "team" | "appearance";
+type SettingsSubTab = "workspaces" | "secrets" | "salesforce" | "team" | "appearance";
 
 const ACCENT_PRESETS: { id: AccentColor; label: string; swatch: string }[] = [
   { id: "honey", label: "Honey", swatch: "#b45309" },
@@ -252,6 +253,7 @@ export function Settings() {
   };
 
   const subTabs: { id: SettingsSubTab; label: string }[] = [
+    { id: "workspaces", label: "Workspaces" },
     { id: "secrets", label: "Secrets" },
     { id: "salesforce", label: "Salesforce" },
     { id: "team", label: "Team" },
@@ -283,6 +285,8 @@ export function Settings() {
           </button>
         ))}
       </div>
+
+      {subTab === "workspaces" && <WorkspacesTab />}
 
       {subTab === "secrets" && (
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -694,6 +698,199 @@ export function Settings() {
 
       {subTab === "appearance" && <AppearanceTab />}
     </div>
+  );
+}
+
+function WorkspacesTab() {
+  const { workspaces, activeWorkspace, switchWorkspace, createWorkspace, updateWorkspace, deleteWorkspace, refresh } = useWorkspace();
+  const [showCreate, setShowCreate] = useState(false);
+  const [createName, setCreateName] = useState("");
+  const [createDesc, setCreateDesc] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [error, setError] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const ws = await createWorkspace(createName.trim(), createDesc.trim());
+      switchWorkspace(ws.id);
+      setCreateName("");
+      setCreateDesc("");
+      setShowCreate(false);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create workspace");
+    }
+  };
+
+  const handleUpdate = async (id: number) => {
+    setError("");
+    try {
+      await updateWorkspace(id, { name: editName.trim(), description: editDesc.trim() });
+      setEditingId(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update workspace");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    setError("");
+    try {
+      await deleteWorkspace(id);
+      setConfirmDeleteId(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to delete workspace");
+    }
+  };
+
+  const startEdit = (ws: Workspace) => {
+    setEditingId(ws.id);
+    setEditName(ws.name);
+    setEditDesc(ws.description);
+  };
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-medium text-slate-800">Workspaces</h2>
+          <p className="text-sm text-slate-500">Isolated environments for your projects and data.</p>
+        </div>
+        {!showCreate && (
+          <button
+            type="button"
+            onClick={() => setShowCreate(true)}
+            className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover cursor-pointer"
+          >
+            New Workspace
+          </button>
+        )}
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+          {error}
+        </div>
+      )}
+
+      {showCreate && (
+        <form onSubmit={handleCreate} className="bg-slate-50 rounded-lg p-4 space-y-3 border border-slate-200">
+          <h3 className="font-medium text-slate-700">Create workspace</h3>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <input
+              type="text"
+              placeholder="Workspace name"
+              value={createName}
+              onChange={(e) => setCreateName(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+              required
+              autoFocus
+            />
+            <input
+              type="text"
+              placeholder="Description (optional)"
+              value={createDesc}
+              onChange={(e) => setCreateDesc(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button type="submit" className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover cursor-pointer">
+              Create
+            </button>
+            <button type="button" onClick={() => setShowCreate(false)} className="px-4 py-2 border border-slate-300 text-slate-600 text-sm rounded-lg hover:bg-slate-100 cursor-pointer">
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      <div className="space-y-3">
+        {workspaces.map((ws) => (
+          <div
+            key={ws.id}
+            className={`rounded-xl border p-4 transition-all ${
+              ws.id === activeWorkspace?.id
+                ? "border-primary bg-primary-bg-subtle"
+                : "border-slate-200 bg-white"
+            }`}
+          >
+            {editingId === ws.id ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={editDesc}
+                    onChange={(e) => setEditDesc(e.target.value)}
+                    placeholder="Description"
+                    className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleUpdate(ws.id)} className="px-3 py-1.5 bg-primary text-white text-xs rounded-lg hover:bg-primary-hover cursor-pointer">Save</button>
+                  <button onClick={() => setEditingId(null)} className="px-3 py-1.5 border border-slate-300 text-slate-600 text-xs rounded-lg hover:bg-slate-100 cursor-pointer">Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-800">{ws.name}</span>
+                    {ws.is_default ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 font-medium">default</span>
+                    ) : null}
+                    {ws.id === activeWorkspace?.id && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary text-white font-medium">active</span>
+                    )}
+                  </div>
+                  {ws.description && <p className="text-xs text-slate-500 mt-0.5">{ws.description}</p>}
+                  <p className="text-xs text-slate-400 mt-1">
+                    {ws.projectCount} project{ws.projectCount !== 1 ? "s" : ""} &middot; Created {new Date(ws.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {ws.id !== activeWorkspace?.id && (
+                    <button onClick={() => switchWorkspace(ws.id)} className="px-3 py-1.5 text-xs font-medium text-primary border border-primary rounded-lg hover:bg-primary-bg-subtle cursor-pointer">
+                      Switch
+                    </button>
+                  )}
+                  <button onClick={() => startEdit(ws)} className="px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-100 cursor-pointer">
+                    Edit
+                  </button>
+                  {!ws.is_default && (
+                    confirmDeleteId === ws.id ? (
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => handleDelete(ws.id)} className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 cursor-pointer">
+                          Confirm
+                        </button>
+                        <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-100 cursor-pointer">
+                          No
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setConfirmDeleteId(ws.id)} className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer">
+                        Delete
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

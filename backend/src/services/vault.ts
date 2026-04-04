@@ -61,39 +61,62 @@ function writeVault(data: VaultData): void {
   fs.writeFileSync(VAULT_PATH, encrypted, "utf8");
 }
 
-export function listSecrets(): Array<{ key: string; category: string; updatedAt: string }> {
-  const vault = readVault();
-  return Object.entries(vault).map(([key, entry]) => ({
-    key,
-    category: entry.category,
-    updatedAt: entry.updatedAt,
-  }));
+function wsKey(key: string, workspaceId?: number): string {
+  if (workspaceId && workspaceId > 1) return `ws:${workspaceId}:${key}`;
+  return key;
 }
 
-export function getSecret(key: string): string | null {
+export function listSecrets(workspaceId?: number): Array<{ key: string; category: string; updatedAt: string }> {
   const vault = readVault();
+  const prefix = workspaceId && workspaceId > 1 ? `ws:${workspaceId}:` : "";
+
+  return Object.entries(vault)
+    .filter(([k]) => {
+      if (prefix) return k.startsWith(prefix);
+      return !k.startsWith("ws:");
+    })
+    .map(([key, entry]) => ({
+      key: prefix ? key.slice(prefix.length) : key,
+      category: entry.category,
+      updatedAt: entry.updatedAt,
+    }));
+}
+
+export function getSecret(key: string, workspaceId?: number): string | null {
+  const vault = readVault();
+  if (workspaceId && workspaceId > 1) {
+    const scoped = vault[`ws:${workspaceId}:${key}`];
+    if (scoped) return scoped.value;
+  }
   return vault[key]?.value ?? null;
 }
 
-export function setSecret(key: string, value: string, category: string): void {
+export function setSecret(key: string, value: string, category: string, workspaceId?: number): void {
   const vault = readVault();
-  vault[key] = { value, category, updatedAt: new Date().toISOString() };
+  const storeKey = wsKey(key, workspaceId);
+  vault[storeKey] = { value, category, updatedAt: new Date().toISOString() };
   writeVault(vault);
 }
 
-export function deleteSecret(key: string): boolean {
+export function deleteSecret(key: string, workspaceId?: number): boolean {
   const vault = readVault();
-  if (!(key in vault)) return false;
-  delete vault[key];
+  const storeKey = wsKey(key, workspaceId);
+  if (!(storeKey in vault)) return false;
+  delete vault[storeKey];
   writeVault(vault);
   return true;
 }
 
-export function getSecretsByCategory(category: string): Record<string, string> {
+export function getSecretsByCategory(category: string, workspaceId?: number): Record<string, string> {
   const vault = readVault();
   const result: Record<string, string> = {};
+  const prefix = workspaceId && workspaceId > 1 ? `ws:${workspaceId}:` : "";
+
   for (const [key, entry] of Object.entries(vault)) {
-    if (entry.category === category) {
+    if (entry.category !== category) continue;
+    if (prefix && key.startsWith(prefix)) {
+      result[key.slice(prefix.length)] = entry.value;
+    } else if (!prefix && !key.startsWith("ws:")) {
       result[key] = entry.value;
     }
   }

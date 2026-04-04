@@ -5,21 +5,26 @@ import path from "path";
 const SOFTWARES_DIR = path.join(import.meta.dir, "../../../softwares");
 const MULE_LOG = path.join(SOFTWARES_DIR, "mule-standalone/logs/mule_ee.log");
 
-export function recordMetric(endpoint: string, method: string, statusCode: number, responseTimeMs: number, projectName: string): void {
+export function recordMetric(endpoint: string, method: string, statusCode: number, responseTimeMs: number, projectName: string, workspaceId = 1): void {
   const db = getDb();
   db.run(
-    "INSERT INTO api_metrics (endpoint, method, status_code, response_time_ms, project_name) VALUES (?, ?, ?, ?, ?)",
-    [endpoint, method, statusCode, responseTimeMs, projectName]
+    "INSERT INTO api_metrics (endpoint, method, status_code, response_time_ms, project_name, workspace_id) VALUES (?, ?, ?, ?, ?, ?)",
+    [endpoint, method, statusCode, responseTimeMs, projectName, workspaceId]
   );
 }
 
-export function getSummary(projectName?: string, hours = 24): any {
+function buildWhere(conditions: string[]): string {
+  return conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "";
+}
+
+export function getSummary(projectName?: string, hours = 24, workspaceId?: number): any {
   const db = getDb();
   const since = new Date(Date.now() - hours * 3600000).toISOString();
-  const where = projectName
-    ? "WHERE timestamp >= ? AND project_name = ?"
-    : "WHERE timestamp >= ?";
-  const params: any[] = projectName ? [since, projectName] : [since];
+  const conds: string[] = ["timestamp >= ?"];
+  const params: any[] = [since];
+  if (projectName) { conds.push("project_name = ?"); params.push(projectName); }
+  if (workspaceId) { conds.push("workspace_id = ?"); params.push(workspaceId); }
+  const where = buildWhere(conds);
 
   const total = db.query(`SELECT COUNT(*) as c FROM api_metrics ${where}`).get(...params) as any;
   const errors = db.query(`SELECT COUNT(*) as c FROM api_metrics ${where} AND status_code >= 400`).get(...params) as any;
@@ -35,13 +40,14 @@ export function getSummary(projectName?: string, hours = 24): any {
   };
 }
 
-export function getTimeline(projectName?: string, hours = 24): any[] {
+export function getTimeline(projectName?: string, hours = 24, workspaceId?: number): any[] {
   const db = getDb();
   const since = new Date(Date.now() - hours * 3600000).toISOString();
-  const where = projectName
-    ? "WHERE timestamp >= ? AND project_name = ?"
-    : "WHERE timestamp >= ?";
-  const params: any[] = projectName ? [since, projectName] : [since];
+  const conds: string[] = ["timestamp >= ?"];
+  const params: any[] = [since];
+  if (projectName) { conds.push("project_name = ?"); params.push(projectName); }
+  if (workspaceId) { conds.push("workspace_id = ?"); params.push(workspaceId); }
+  const where = buildWhere(conds);
 
   const rows = db.query(`
     SELECT strftime('%Y-%m-%d %H:00', timestamp) as hour,
@@ -54,12 +60,14 @@ export function getTimeline(projectName?: string, hours = 24): any[] {
   return rows as any[];
 }
 
-export function getRecentErrors(projectName?: string, limit = 50): any[] {
+export function getRecentErrors(projectName?: string, limit = 50, workspaceId?: number): any[] {
   const db = getDb();
-  const where = projectName
-    ? "WHERE status_code >= 400 AND project_name = ?"
-    : "WHERE status_code >= 400";
-  const params: any[] = projectName ? [projectName, limit] : [limit];
+  const conds: string[] = ["status_code >= 400"];
+  const params: any[] = [];
+  if (projectName) { conds.push("project_name = ?"); params.push(projectName); }
+  if (workspaceId) { conds.push("workspace_id = ?"); params.push(workspaceId); }
+  const where = buildWhere(conds);
+  params.push(limit);
 
   const rows = db.query(
     `SELECT * FROM api_metrics ${where} ORDER BY timestamp DESC LIMIT ?`
@@ -67,10 +75,13 @@ export function getRecentErrors(projectName?: string, limit = 50): any[] {
   return rows as any[];
 }
 
-export function getEndpointBreakdown(projectName?: string): any[] {
+export function getEndpointBreakdown(projectName?: string, workspaceId?: number): any[] {
   const db = getDb();
-  const where = projectName ? "WHERE project_name = ?" : "";
-  const params: any[] = projectName ? [projectName] : [];
+  const conds: string[] = [];
+  const params: any[] = [];
+  if (projectName) { conds.push("project_name = ?"); params.push(projectName); }
+  if (workspaceId) { conds.push("workspace_id = ?"); params.push(workspaceId); }
+  const where = buildWhere(conds);
 
   const rows = db.query(`
     SELECT endpoint, method,

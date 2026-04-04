@@ -29,6 +29,25 @@ function initDb(): Database {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS workspaces (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      description TEXT DEFAULT '',
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      is_default INTEGER DEFAULT 0
+    )
+  `);
+
+  const defaultWs = db.query("SELECT id FROM workspaces WHERE is_default = 1").get();
+  if (!defaultWs) {
+    db.run(
+      "INSERT INTO workspaces (name, description, created_by, is_default) VALUES (?, ?, ?, 1)",
+      ["Default", "Default workspace", "system"]
+    );
+  }
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS test_runs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       project_name TEXT NOT NULL,
@@ -36,9 +55,12 @@ function initDb(): Database {
       total INTEGER DEFAULT 0,
       passed INTEGER DEFAULT 0,
       failed INTEGER DEFAULT 0,
-      results_json TEXT
+      results_json TEXT,
+      workspace_id INTEGER DEFAULT 1 REFERENCES workspaces(id)
     )
   `);
+
+  migrateColumn(db, "test_runs", "workspace_id", "INTEGER DEFAULT 1 REFERENCES workspaces(id)");
 
   db.run(`
     CREATE TABLE IF NOT EXISTS api_metrics (
@@ -48,11 +70,21 @@ function initDb(): Database {
       method TEXT,
       status_code INTEGER,
       response_time_ms INTEGER,
-      project_name TEXT
+      project_name TEXT,
+      workspace_id INTEGER DEFAULT 1 REFERENCES workspaces(id)
     )
   `);
 
+  migrateColumn(db, "api_metrics", "workspace_id", "INTEGER DEFAULT 1 REFERENCES workspaces(id)");
+
   return db;
+}
+
+function migrateColumn(db: Database, table: string, column: string, definition: string): void {
+  const cols = db.query(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  if (!cols.some((c) => c.name === column)) {
+    db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
 }
 
 export function getDb(): Database {

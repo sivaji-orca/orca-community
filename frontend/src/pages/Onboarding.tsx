@@ -40,22 +40,27 @@ const STEPS: { id: Step; label: string }[] = [
   { id: "ready", label: "Ready" },
 ];
 
-function StepIndicator({ current }: { current: Step }) {
+function StepIndicator({ current, onNavigate }: { current: Step; onNavigate: (s: Step) => void }) {
   const currentIdx = STEPS.findIndex((s) => s.id === current);
   return (
     <div className="flex items-center justify-center gap-2 mb-10">
       {STEPS.map((step, i) => {
         const done = i < currentIdx;
         const active = i === currentIdx;
+        const clickable = done;
         return (
           <div key={step.id} className="flex items-center gap-2">
-            <div
+            <button
+              type="button"
+              disabled={!clickable}
+              onClick={() => clickable && onNavigate(step.id)}
+              title={clickable ? `Go back to ${step.label}` : step.label}
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
                 done
-                  ? "bg-emerald-500 text-white"
+                  ? "bg-emerald-500 text-white hover:bg-emerald-600 cursor-pointer"
                   : active
-                    ? "bg-primary text-white ring-4 ring-primary-bg"
-                    : "bg-slate-200 text-slate-500"
+                    ? "bg-primary text-white ring-4 ring-primary-bg cursor-default"
+                    : "bg-slate-200 text-slate-500 cursor-default"
               }`}
             >
               {done ? (
@@ -65,7 +70,7 @@ function StepIndicator({ current }: { current: Step }) {
               ) : (
                 i + 1
               )}
-            </div>
+            </button>
             {i < STEPS.length - 1 && (
               <div className={`w-8 h-0.5 ${i < currentIdx ? "bg-emerald-400" : "bg-slate-200"}`} />
             )}
@@ -193,7 +198,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-bg-subtle via-white to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        <StepIndicator current={step} />
+        <StepIndicator current={step} onNavigate={setStep} />
 
         {/* ===== STEP 1: WELCOME ===== */}
         {step === "welcome" && (
@@ -784,6 +789,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 Tip: After logging in, head to the <strong>New Project</strong> tab to scaffold your first API.
               </p>
             </div>
+
+            <button
+              onClick={() => setStep("configure")}
+              className="mt-6 text-sm text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              &larr; Back to Configure
+            </button>
           </div>
         )}
       </div>

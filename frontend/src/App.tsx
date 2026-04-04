@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { ThemeContext, useThemeProvider } from "./hooks/useTheme";
+import { WorkspaceContext, useWorkspaceProvider } from "./hooks/useWorkspace";
 import { Onboarding } from "./pages/Onboarding";
 import { Login } from "./pages/Login";
 import { AdminDashboard } from "./pages/admin/Dashboard";
@@ -24,7 +25,15 @@ function AppContent() {
   }
 
   if (!isAuthenticated || !user) {
-    return <Login onLogin={async (u, p) => { await login(u, p); }} />;
+    return (
+      <Login
+        onLogin={async (u, p) => { await login(u, p); }}
+        onRestartOnboarding={() => {
+          localStorage.removeItem("orca_onboarding_complete");
+          setOnboarded(false);
+        }}
+      />
+    );
   }
 
   if (user.role === "administrator") {
@@ -36,10 +45,13 @@ function AppContent() {
 
 function App() {
   const theme = useThemeProvider();
+  const workspace = useWorkspaceProvider();
 
   return (
     <ThemeContext.Provider value={theme}>
-      <AppContent />
+      <WorkspaceContext.Provider value={workspace}>
+        <AppContent />
+      </WorkspaceContext.Provider>
     </ThemeContext.Provider>
   );
 }
