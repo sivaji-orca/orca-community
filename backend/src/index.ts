@@ -22,6 +22,7 @@ import salesforceRoutes from "./routes/salesforce";
 import securityRoutes from "./routes/security";
 import brandingRoutes from "./routes/branding";
 import scannerRoutes from "./routes/scanner";
+import dataweaveRoutes from "./routes/dataweave";
 
 import { startMetricsParsing } from "./services/analytics";
 import { resolveWorkspace } from "./middleware/auth";
@@ -54,6 +55,7 @@ app.use("/api/salesforce", salesforceRoutes);
 app.use("/api/security", securityRoutes);
 app.use("/api/branding", brandingRoutes);
 app.use("/api/scanner", scannerRoutes);
+app.use("/api/dataweave", dataweaveRoutes);
 
 migrateProjectsToWorkspaces();
 startMetricsParsing();

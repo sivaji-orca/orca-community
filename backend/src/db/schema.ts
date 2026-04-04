@@ -123,6 +123,39 @@ function initDb(): Database {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS dw_snippets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      script TEXT NOT NULL,
+      sample_input TEXT DEFAULT '{}',
+      input_mime TEXT DEFAULT 'application/json',
+      output_mime TEXT DEFAULT 'application/json',
+      tags TEXT DEFAULT '[]',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      workspace_id INTEGER DEFAULT 1 REFERENCES workspaces(id)
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS dw_executions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      script TEXT NOT NULL,
+      input_data TEXT,
+      input_mime TEXT DEFAULT 'application/json',
+      output_mime TEXT DEFAULT 'application/json',
+      output_data TEXT,
+      success INTEGER DEFAULT 1,
+      error_message TEXT,
+      execution_time_ms INTEGER DEFAULT 0,
+      engine TEXT DEFAULT 'unknown',
+      executed_at TEXT DEFAULT (datetime('now')),
+      workspace_id INTEGER DEFAULT 1 REFERENCES workspaces(id)
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS vault_audit (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       correlation_id TEXT NOT NULL,
