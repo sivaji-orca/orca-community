@@ -112,18 +112,21 @@ export function generateSyncCollections(prefix: string, outputDir: string): stri
   const generated: string[] = [];
 
   const sfCollection = {
-    info: { name: `${prefix}-sf-system-api`, schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+    info: {
+      name: `${prefix}-sf-system-api`,
+      description: "Salesforce System API — HTTP read endpoints for Salesforce data. Write operations are handled by Kafka consumers (orca.neon.contacts.pending / orca.neon.accounts.pending).",
+      schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    },
     variable: [{ key: "sfBaseUrl", value: "http://localhost:8082", description: "SF System API base" }],
     item: [
-      { name: "Contacts", item: [
+      { name: "Health", item: [makeRequest("Health Check", "GET", "sfBaseUrl", "/api/health")] },
+      { name: "Contacts (Read — HTTP)", item: [
         makeRequest("GET All Contacts", "GET", "sfBaseUrl", "/api/contacts"),
         makeRequest("GET Contact by ID", "GET", "sfBaseUrl", "/api/contacts/003XXXXXXXXXXXXXXX"),
-        makeRequest("Upsert Contact", "POST", "sfBaseUrl", "/api/contacts", { FirstName: "Jane", LastName: "Doe", Email: "jane.doe@example.com", Phone: "555-1234" }),
       ]},
-      { name: "Accounts", item: [
+      { name: "Accounts (Read — HTTP)", item: [
         makeRequest("GET All Accounts", "GET", "sfBaseUrl", "/api/accounts"),
         makeRequest("GET Account by ID", "GET", "sfBaseUrl", "/api/accounts/001XXXXXXXXXXXXXXX"),
-        makeRequest("Upsert Account", "POST", "sfBaseUrl", "/api/accounts", { Name: "Acme Corp", Industry: "Technology", Phone: "555-5678", Website: "https://acme.example.com" }),
       ]},
     ],
   };
@@ -131,18 +134,25 @@ export function generateSyncCollections(prefix: string, outputDir: string): stri
   generated.push(`${prefix}-sf-system-api-collection.json`);
 
   const dbCollection = {
-    info: { name: `${prefix}-db-system-api`, schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+    info: {
+      name: `${prefix}-db-system-api`,
+      description: "Database System API — HTTP read endpoints for Neon PostgreSQL. Write operations via Kafka consumers (orca.sfdc.*.cdc topics). Audit trail persisted from orca.audit.sync-events topic.",
+      schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    },
     variable: [{ key: "dbBaseUrl", value: "http://localhost:8083", description: "DB System API base" }],
     item: [
       { name: "Health", item: [makeRequest("Health Check", "GET", "dbBaseUrl", "/api/health")] },
-      { name: "Contacts", item: [
+      { name: "Contacts (Read — HTTP)", item: [
         makeRequest("GET All Contacts", "GET", "dbBaseUrl", "/api/contacts"),
         makeRequest("GET Contacts Since", "GET", "dbBaseUrl", "/api/contacts?since=2024-01-01T00:00:00Z"),
-        makeRequest("Upsert Contact", "POST", "dbBaseUrl", "/api/contacts", { sf_id: "003XXXXXXXXXXXXXXX", first_name: "Jane", last_name: "Doe", email: "jane.doe@example.com", phone: "555-1234", sync_status: "synced" }),
       ]},
-      { name: "Accounts", item: [
+      { name: "Accounts (Read — HTTP)", item: [
         makeRequest("GET All Accounts", "GET", "dbBaseUrl", "/api/accounts"),
-        makeRequest("Upsert Account", "POST", "dbBaseUrl", "/api/accounts", { sf_id: "001XXXXXXXXXXXXXXX", name: "Acme Corp", industry: "Technology", phone: "555-5678", website: "https://acme.example.com", sync_status: "synced" }),
+      ]},
+      { name: "Audit Trail", item: [
+        makeRequest("GET Sync Events", "GET", "dbBaseUrl", "/api/sync-events"),
+        makeRequest("GET Sync Events by Correlation ID", "GET", "dbBaseUrl", "/api/sync-events?correlation_id=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"),
+        makeRequest("GET Failed Sync Events", "GET", "dbBaseUrl", "/api/sync-events?status=failure"),
       ]},
     ],
   };
@@ -150,10 +160,14 @@ export function generateSyncCollections(prefix: string, outputDir: string): stri
   generated.push(`${prefix}-db-system-api-collection.json`);
 
   const syncCollection = {
-    info: { name: `${prefix}-sync-process-api`, schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+    info: {
+      name: `${prefix}-sync-process-api`,
+      description: "Sync Process API — Orchestrator with Kafka event backbone. CDC events from Salesforce are published to Kafka topics. Scheduler polls db-system-api for pending rows and publishes to Kafka. No direct HTTP write paths.",
+      schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    },
     variable: [{ key: "syncBaseUrl", value: "http://localhost:8081", description: "Sync Process API base" }],
     item: [
-      { name: "Health", item: [makeRequest("Sync Health Check", "GET", "syncBaseUrl", "/api/health")] },
+      { name: "Health", item: [makeRequest("Sync Health Check (incl. Kafka topics)", "GET", "syncBaseUrl", "/api/health")] },
     ],
   };
   fs.writeFileSync(path.join(outputDir, `${prefix}-sync-process-api-collection.json`), JSON.stringify(syncCollection, null, 2));

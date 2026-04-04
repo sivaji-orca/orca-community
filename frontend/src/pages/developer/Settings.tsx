@@ -21,7 +21,7 @@ const MODE_OPTIONS: { id: ThemeMode; label: string; icon: string }[] = [
   { id: "system", label: "System", icon: "💻" },
 ];
 
-type SecretCategory = "anypoint" | "salesforce" | "github" | "postman" | "neon";
+type SecretCategory = "anypoint" | "salesforce" | "github" | "postman" | "neon" | "kafka";
 
 interface SecretEntry {
   key: string;
@@ -33,6 +33,7 @@ const SECRET_CATEGORIES: SecretCategory[] = [
   "anypoint",
   "salesforce",
   "neon",
+  "kafka",
   "github",
   "postman",
 ];

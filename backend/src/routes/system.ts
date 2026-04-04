@@ -402,6 +402,7 @@ interface ConfigureBody {
   postman?: { api_key?: string };
   neon?: { database_url?: string; host?: string; database?: string; username?: string; password?: string };
   salesforce?: { instance_url?: string; username?: string; password?: string; security_token?: string };
+  kafka?: { bootstrap_servers?: string; api_key?: string; api_secret?: string; schema_registry_url?: string; schema_registry_api_key?: string; schema_registry_api_secret?: string };
 }
 
 router.post("/configure", (req: Request, res: Response): void => {
@@ -476,6 +477,16 @@ router.post("/configure", (req: Request, res: Response): void => {
       if (security_token) { setSecret("salesforce_security_token", security_token, "salesforce"); results.push("Salesforce security token saved to vault"); }
     }
 
+    if (body.kafka) {
+      const { bootstrap_servers, api_key, api_secret, schema_registry_url, schema_registry_api_key, schema_registry_api_secret } = body.kafka;
+      if (bootstrap_servers) { setSecret("kafka_bootstrap_servers", bootstrap_servers, "kafka"); results.push("Kafka bootstrap servers saved"); }
+      if (api_key) { setSecret("kafka_api_key", api_key, "kafka"); results.push("Kafka API key saved to vault"); }
+      if (api_secret) { setSecret("kafka_api_secret", api_secret, "kafka"); results.push("Kafka API secret saved to vault"); }
+      if (schema_registry_url) { setSecret("kafka_schema_registry_url", schema_registry_url, "kafka"); results.push("Schema Registry URL saved"); }
+      if (schema_registry_api_key) { setSecret("kafka_sr_api_key", schema_registry_api_key, "kafka"); results.push("Schema Registry API key saved"); }
+      if (schema_registry_api_secret) { setSecret("kafka_sr_api_secret", schema_registry_api_secret, "kafka"); results.push("Schema Registry API secret saved to vault"); }
+    }
+
     res.json({
       success: true,
       message: results.length > 0 ? "Configuration saved successfully" : "No credentials provided",
@@ -506,6 +517,11 @@ router.get("/configure/status", (_req: Request, res: Response): void => {
     security_token: !!getSecret("salesforce_security_token"),
   };
 
+  const kafka = {
+    bootstrap_servers: !!getSecret("kafka_bootstrap_servers"),
+    api_key: !!getSecret("kafka_api_key"),
+  };
+
   res.json({
     configured: anypoint.client_id && anypoint.client_secret,
     anypoint,
@@ -513,7 +529,35 @@ router.get("/configure/status", (_req: Request, res: Response): void => {
     postman,
     neon,
     salesforce,
+    kafka,
   });
+});
+
+router.get("/test-kafka", async (_req: Request, res: Response): Promise<void> => {
+  const bootstrapServers = getSecret("kafka_bootstrap_servers");
+  const apiKey = getSecret("kafka_api_key");
+  const apiSecret = getSecret("kafka_api_secret");
+  if (!bootstrapServers || !apiKey || !apiSecret) {
+    res.json({ success: false, message: "Kafka credentials not fully configured. Add bootstrap servers, API key, and API secret." });
+    return;
+  }
+  try {
+    const { Kafka } = await import("kafkajs");
+    const kafka = new Kafka({
+      clientId: "orca-test",
+      brokers: bootstrapServers.split(","),
+      ssl: true,
+      sasl: { mechanism: "plain", username: apiKey, password: apiSecret },
+      connectionTimeout: 10000,
+    });
+    const admin = kafka.admin();
+    await admin.connect();
+    const topics = await admin.listTopics();
+    await admin.disconnect();
+    res.json({ success: true, message: `Connected to Confluent Cloud. Found ${topics.length} topics.`, topics: topics.slice(0, 20) });
+  } catch (err) {
+    res.json({ success: false, message: `Kafka connection failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
 });
 
 router.get("/test-neon", async (_req: Request, res: Response): Promise<void> => {

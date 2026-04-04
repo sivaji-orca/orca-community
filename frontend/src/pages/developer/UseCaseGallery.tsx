@@ -6,6 +6,7 @@ interface CredStatus {
   anypoint: { client_id: boolean; client_secret: boolean };
   salesforce: { instance_url: boolean; username: boolean; password: boolean; security_token: boolean };
   neon: { database_url: boolean };
+  kafka: { bootstrap_servers: boolean; api_key: boolean };
   github: { token: boolean };
   postman: { api_key: boolean };
 }
@@ -32,6 +33,7 @@ const USE_CASES: UseCase[] = [
       { key: "anypoint", label: "Anypoint Platform", setupUrl: "https://anypoint.mulesoft.com", setupLabel: "Create Connected App" },
       { key: "salesforce", label: "Salesforce", setupUrl: "https://developer.salesforce.com/signup", setupLabel: "Developer Account" },
       { key: "neon", label: "Neon PostgreSQL", setupUrl: "https://neon.tech", setupLabel: "Free Database" },
+      { key: "kafka", label: "Confluent Cloud (Kafka)", setupUrl: "https://confluent.cloud/signup", setupLabel: "Create Cluster" },
     ],
     ports: [
       { name: "sync-process-api", port: 8081, description: "Orchestrator — CDC listener + scheduler" },
@@ -39,14 +41,16 @@ const USE_CASES: UseCase[] = [
       { name: "db-system-api", port: 8083, description: "PostgreSQL CRUD via DB Connector" },
     ],
     features: [
-      "Salesforce CDC for real-time SF→Postgres sync",
-      "Polling scheduler (15s) for Postgres→SF sync",
-      "DataWeave field mappings for Contacts & Accounts",
-      "SQL migration scripts with indexes & triggers",
+      "Kafka event backbone via Confluent Cloud (SASL_SSL)",
+      "Salesforce CDC → Kafka topics for real-time SF→Postgres",
+      "Polling scheduler → Kafka topics for Postgres→SF",
+      "Canonical data model with JSON Schema validation",
+      "Common error handler with DLQ + structured JSON logging",
+      "Audit trail in sync_events table via Kafka consumer",
+      "SQL migrations with indexes, triggers & sync_state",
       "Automated Postman collections for all endpoints",
-      "30-second SLA for bidirectional sync",
     ],
-    syncMechanism: "CDC + Polling",
+    syncMechanism: "CDC + Kafka + Polling",
   },
 ];
 
@@ -56,6 +60,7 @@ function isCredReady(key: string, status: CredStatus | null): boolean {
     case "anypoint": return status.anypoint.client_id && status.anypoint.client_secret;
     case "salesforce": return status.salesforce.instance_url && status.salesforce.username;
     case "neon": return status.neon.database_url;
+    case "kafka": return status.kafka?.bootstrap_servers && status.kafka?.api_key;
     default: return false;
   }
 }
@@ -99,17 +104,17 @@ export function UseCaseGallery({ onNavigate }: UseCaseGalleryProps) {
 
               {/* Architecture diagram */}
               <div className="px-6 py-4 bg-slate-50 border-y border-slate-200">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Architecture</p>
-                <div className="flex items-center justify-center gap-2 text-xs">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Architecture (Kafka Event Backbone)</p>
+                <div className="flex items-center justify-center gap-2 text-xs flex-wrap">
                   <div className="bg-blue-100 text-blue-700 rounded-lg px-3 py-2 text-center min-w-[100px]">
                     <div className="font-bold">Salesforce</div>
-                    <div className="text-blue-500 mt-0.5">Contacts / Accounts</div>
+                    <div className="text-blue-500 mt-0.5">CDC Events</div>
                   </div>
                   <div className="flex flex-col items-center text-slate-400">
-                    <span>CDC events</span>
+                    <span>CDC</span>
                     <svg className="w-6 h-3" viewBox="0 0 24 12"><path d="M0 6h20m0 0l-4-4m4 4l-4 4" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
                   </div>
-                  <div className="bg-primary-bg text-primary-text rounded-lg px-3 py-2 text-center min-w-[140px]">
+                  <div className="bg-primary-bg text-primary-text rounded-lg px-3 py-2 text-center min-w-[130px]">
                     <div className="font-bold">MuleSoft</div>
                     <div className="mt-0.5 space-y-0.5">
                       {uc.ports.map((p) => (
@@ -118,17 +123,29 @@ export function UseCaseGallery({ onNavigate }: UseCaseGalleryProps) {
                     </div>
                   </div>
                   <div className="flex flex-col items-center text-slate-400">
-                    <span>SQL upsert</span>
+                    <span>publish</span>
+                    <svg className="w-6 h-3" viewBox="0 0 24 12"><path d="M0 6h20m0 0l-4-4m4 4l-4 4" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
+                  </div>
+                  <div className="bg-purple-100 text-purple-700 rounded-lg px-3 py-2 text-center min-w-[140px]">
+                    <div className="font-bold">Confluent Kafka</div>
+                    <div className="text-purple-500 mt-0.5 space-y-0.5">
+                      <div>sfdc.*.cdc</div>
+                      <div>neon.*.pending</div>
+                      <div>audit / dlq</div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center text-slate-400">
+                    <span>consume</span>
                     <svg className="w-6 h-3" viewBox="0 0 24 12"><path d="M0 6h20m0 0l-4-4m4 4l-4 4" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
                   </div>
                   <div className="bg-green-100 text-green-700 rounded-lg px-3 py-2 text-center min-w-[100px]">
                     <div className="font-bold">Neon PG</div>
-                    <div className="text-green-500 mt-0.5">contacts / accounts</div>
+                    <div className="text-green-500 mt-0.5">contacts / accounts<br/>sync_events</div>
                   </div>
                 </div>
-                <div className="flex items-center justify-center mt-1 text-xs text-slate-400">
+                <div className="flex items-center justify-center mt-2 text-xs text-slate-400">
                   <svg className="w-6 h-3 rotate-180 mr-2" viewBox="0 0 24 12"><path d="M0 6h20m0 0l-4-4m4 4l-4 4" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
-                  Poll every 15s (pending changes)
+                  Bidirectional: CDC + Kafka topics + Poll (15s)
                   <svg className="w-6 h-3 rotate-180 ml-2" viewBox="0 0 24 12"><path d="M0 6h20m0 0l-4-4m4 4l-4 4" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
                 </div>
               </div>

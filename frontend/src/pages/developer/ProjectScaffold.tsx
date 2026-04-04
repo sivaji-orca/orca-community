@@ -16,6 +16,7 @@ interface CredStatus {
   anypoint: { client_id: boolean; client_secret: boolean };
   salesforce: { instance_url: boolean; username: boolean; password: boolean; security_token: boolean };
   neon: { database_url: boolean };
+  kafka: { bootstrap_servers: boolean; api_key: boolean };
   github: { token: boolean };
   postman: { api_key: boolean };
 }
@@ -38,6 +39,7 @@ const CRED_LABELS: Record<string, string> = {
   anypoint: "Anypoint Platform",
   salesforce: "Salesforce",
   neon: "Neon PostgreSQL",
+  kafka: "Confluent Cloud (Kafka)",
   github: "GitHub",
   postman: "Postman",
 };
@@ -48,6 +50,7 @@ function isCredReady(cred: string, status: CredStatus | null): boolean {
     case "anypoint": return status.anypoint.client_id && status.anypoint.client_secret;
     case "salesforce": return status.salesforce.instance_url && status.salesforce.username;
     case "neon": return status.neon.database_url;
+    case "kafka": return status.kafka?.bootstrap_servers && status.kafka?.api_key;
     case "github": return status.github.token;
     case "postman": return status.postman.api_key;
     default: return false;

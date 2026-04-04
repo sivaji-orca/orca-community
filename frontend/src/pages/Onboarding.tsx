@@ -118,13 +118,21 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     salesforce_password: "",
     salesforce_security_token: "",
     neon_database_url: "",
+    kafka_bootstrap_servers: "",
+    kafka_api_key: "",
+    kafka_api_secret: "",
+    kafka_schema_registry_url: "",
+    kafka_sr_api_key: "",
+    kafka_sr_api_secret: "",
   });
   const [configSaving, setConfigSaving] = useState(false);
   const [configResult, setConfigResult] = useState<{ success: boolean; message: string; details: string[] } | null>(null);
-  const [configSection, setConfigSection] = useState<"anypoint" | "salesforce" | "neon" | "more">("anypoint");
+  const [configSection, setConfigSection] = useState<"anypoint" | "salesforce" | "neon" | "kafka" | "more">("anypoint");
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [neonTesting, setNeonTesting] = useState(false);
   const [neonTestResult, setNeonTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [kafkaTesting, setKafkaTesting] = useState(false);
+  const [kafkaTestResult, setKafkaTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const checkPrereqs = useCallback(async () => {
     setChecking(true);
@@ -182,6 +190,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       }
       if (configForm.neon_database_url) {
         body.neon = { database_url: configForm.neon_database_url };
+      }
+      if (configForm.kafka_bootstrap_servers || configForm.kafka_api_key || configForm.kafka_api_secret || configForm.kafka_schema_registry_url || configForm.kafka_sr_api_key || configForm.kafka_sr_api_secret) {
+        body.kafka = {};
+        if (configForm.kafka_bootstrap_servers) body.kafka.bootstrap_servers = configForm.kafka_bootstrap_servers;
+        if (configForm.kafka_api_key) body.kafka.api_key = configForm.kafka_api_key;
+        if (configForm.kafka_api_secret) body.kafka.api_secret = configForm.kafka_api_secret;
+        if (configForm.kafka_schema_registry_url) body.kafka.schema_registry_url = configForm.kafka_schema_registry_url;
+        if (configForm.kafka_sr_api_key) body.kafka.schema_registry_api_key = configForm.kafka_sr_api_key;
+        if (configForm.kafka_sr_api_secret) body.kafka.schema_registry_api_secret = configForm.kafka_sr_api_secret;
       }
 
       const res = await fetch("/api/system/configure", {
@@ -519,6 +536,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   { id: "anypoint" as const, label: "Anypoint", icon: "M" },
                   { id: "salesforce" as const, label: "Salesforce", icon: "SF" },
                   { id: "neon" as const, label: "Neon PG", icon: "N" },
+                  { id: "kafka" as const, label: "Kafka", icon: "K" },
                   { id: "more" as const, label: "Git & PM", icon: "+" },
                 ] as const
               ).map((tab) => (
@@ -757,6 +775,143 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 {neonTestResult && (
                   <div className={`rounded-lg border p-3 text-sm ${neonTestResult.success ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
                     {neonTestResult.success ? "\u2713" : "\u2717"} {neonTestResult.message}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Kafka (Confluent Cloud) section */}
+            {configSection === "kafka" && (
+              <div className="space-y-4 mb-6">
+                <div className="rounded-xl border border-purple-200 bg-purple-50/50 p-4">
+                  <p className="text-sm text-purple-800">
+                    <strong>Confluent Cloud setup:</strong>{" "}
+                    <a href="https://confluent.cloud/signup" target="_blank" rel="noopener noreferrer" className="underline font-medium">Sign up at confluent.cloud</a>.
+                    Create a Kafka cluster, then go to Cluster Settings for the bootstrap server.
+                    Create an API key under Cluster &rarr; API Keys.
+                    Enable Schema Registry under Environment &rarr; Schema Registry.{" "}
+                    <a href="https://docs.confluent.io/cloud/current/get-started/index.html" target="_blank" rel="noopener noreferrer" className="underline font-medium">Quick start guide</a>.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Bootstrap Servers</label>
+                  <input
+                    type="text"
+                    placeholder="pkc-xxxxx.us-east-1.aws.confluent.cloud:9092"
+                    value={configForm.kafka_bootstrap_servers}
+                    onChange={(e) => setConfigForm((f) => ({ ...f, kafka_bootstrap_servers: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Cluster API Key</label>
+                  <input
+                    type="text"
+                    placeholder="ABCDEFGHIJKLMNOP"
+                    value={configForm.kafka_api_key}
+                    onChange={(e) => setConfigForm((f) => ({ ...f, kafka_api_key: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Cluster API Secret</label>
+                  <div className="relative">
+                    <input
+                      type={showSecrets["kafka_secret"] ? "text" : "password"}
+                      placeholder="Your Confluent Cloud API secret"
+                      value={configForm.kafka_api_secret}
+                      onChange={(e) => setConfigForm((f) => ({ ...f, kafka_api_secret: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                    />
+                    <button type="button" onClick={() => toggleSecret("kafka_secret")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                      {showSecrets["kafka_secret"] ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Schema Registry</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Schema Registry URL</label>
+                  <input
+                    type="text"
+                    placeholder="https://psrc-xxxxx.us-east-1.aws.confluent.cloud"
+                    value={configForm.kafka_schema_registry_url}
+                    onChange={(e) => setConfigForm((f) => ({ ...f, kafka_schema_registry_url: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Schema Registry API Key</label>
+                  <input
+                    type="text"
+                    placeholder="SR API Key"
+                    value={configForm.kafka_sr_api_key}
+                    onChange={(e) => setConfigForm((f) => ({ ...f, kafka_sr_api_key: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Schema Registry API Secret</label>
+                  <div className="relative">
+                    <input
+                      type={showSecrets["kafka_sr_secret"] ? "text" : "password"}
+                      placeholder="SR API Secret"
+                      value={configForm.kafka_sr_api_secret}
+                      onChange={(e) => setConfigForm((f) => ({ ...f, kafka_sr_api_secret: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                    />
+                    <button type="button" onClick={() => toggleSecret("kafka_sr_secret")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                      {showSecrets["kafka_sr_secret"] ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    setKafkaTesting(true);
+                    setKafkaTestResult(null);
+                    try {
+                      if (configForm.kafka_bootstrap_servers && configForm.kafka_api_key && configForm.kafka_api_secret) {
+                        await fetch("/api/system/configure", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ kafka: { bootstrap_servers: configForm.kafka_bootstrap_servers, api_key: configForm.kafka_api_key, api_secret: configForm.kafka_api_secret, schema_registry_url: configForm.kafka_schema_registry_url, schema_registry_api_key: configForm.kafka_sr_api_key, schema_registry_api_secret: configForm.kafka_sr_api_secret } }),
+                        });
+                      }
+                      const res = await fetch("/api/system/test-kafka");
+                      const data = await res.json();
+                      setKafkaTestResult(data);
+                    } catch {
+                      setKafkaTestResult({ success: false, message: "Network error" });
+                    } finally {
+                      setKafkaTesting(false);
+                    }
+                  }}
+                  disabled={kafkaTesting || !configForm.kafka_bootstrap_servers || !configForm.kafka_api_key || !configForm.kafka_api_secret}
+                  className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 cursor-pointer"
+                >
+                  {kafkaTesting ? "Testing..." : "Test Kafka Connection"}
+                </button>
+
+                {kafkaTestResult && (
+                  <div className={`rounded-lg border p-3 text-sm ${kafkaTestResult.success ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+                    {kafkaTestResult.success ? "\u2713" : "\u2717"} {kafkaTestResult.message}
                   </div>
                 )}
               </div>

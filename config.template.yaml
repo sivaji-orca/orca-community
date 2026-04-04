@@ -41,6 +41,15 @@ neon:
   password: ""
   ssl: true
 
+# Kafka (Confluent Cloud)
+kafka:
+  bootstrap_servers: ""             # e.g., pkc-xxxxx.us-east-1.aws.confluent.cloud:9092
+  api_key: ""                       # Cluster API Key
+  api_secret: ""                    # Cluster API Secret
+  schema_registry_url: ""           # e.g., https://psrc-xxxxx.us-east-1.aws.confluent.cloud
+  schema_registry_api_key: ""       # Schema Registry API Key
+  schema_registry_api_secret: ""    # Schema Registry API Secret
+
 # Mule Runtime
 mule:
   runtime_version: "4.11.2"
