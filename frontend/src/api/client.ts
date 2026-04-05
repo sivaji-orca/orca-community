@@ -34,9 +34,12 @@ async function request<T>(
   const res = await fetch(`${BASE}${path}`, { ...options, headers });
 
   if (res.status === 401 || res.status === 403) {
+    const hadToken = !!token;
     localStorage.removeItem("orca_token");
     localStorage.removeItem("orca_user");
-    window.location.href = "/";
+    if (hadToken) {
+      window.location.href = "/";
+    }
     throw new Error("Session expired");
   }
 
