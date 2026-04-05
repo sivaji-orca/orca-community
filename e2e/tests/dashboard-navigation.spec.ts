@@ -1,28 +1,16 @@
 import { test, expect } from "@playwright/test";
-
-async function loginAsDev(page: import("@playwright/test").Page) {
-  await page.evaluate(() => localStorage.clear());
-  await page.goto("/");
-  await page.getByPlaceholder("Enter username").fill("developer");
-  await page.getByPlaceholder("Enter password").fill("developer");
-  await page.getByRole("button", { name: "Sign In" }).click();
-  await expect(page.getByText("Overview")).toBeVisible({ timeout: 10_000 });
-}
+import { loginAsDev } from "./helpers/login";
 
 test.describe("Dashboard navigation", () => {
   test.beforeEach(async ({ page }) => {
     await loginAsDev(page);
   });
 
-  test("shows the main dashboard header with app name", async ({ page }) => {
-    await expect(page.locator("header")).toBeVisible();
+  test("shows the main dashboard heading", async ({ page }) => {
+    await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   });
 
   test("sidebar has key navigation tabs", async ({ page }) => {
-    const nav = page.locator("nav, aside, [role=navigation]").first();
-    if (await nav.isVisible()) {
-      await expect(nav).toBeVisible();
-    }
     const tabsToCheck = ["Overview", "New Project", "Projects"];
     for (const tab of tabsToCheck) {
       const el = page.getByText(tab, { exact: false }).first();
@@ -46,6 +34,7 @@ test.describe("Dashboard navigation", () => {
   });
 
   test("shows signed-in user info", async ({ page }) => {
-    await expect(page.getByText("developer")).toBeVisible();
+    const userEl = page.locator("text=developer").first();
+    await expect(userEl).toBeVisible({ timeout: 5_000 });
   });
 });

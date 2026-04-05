@@ -10,30 +10,28 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI
     ? [["html", { open: "never" }], ["github"]]
-    : [["html", { open: "on-failure" }]],
+    : [["list"]],
   use: {
     baseURL: "http://localhost:5173",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
     trace: "retain-on-failure",
   },
+  projects: [
+    { name: "chromium", use: { browserName: "chromium" } },
+  ],
   webServer: [
     {
-      command: "bun run start",
-      cwd: "../backend",
+      command: "cd ../backend && bun run src/index.ts",
       port: 3003,
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
     },
     {
-      command: "bun run dev",
-      cwd: "../frontend",
+      command: "cd ../frontend && npm run dev",
       port: 5173,
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
     },
-  ],
-  projects: [
-    { name: "chromium", use: { browserName: "chromium" } },
   ],
 });

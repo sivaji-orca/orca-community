@@ -1,13 +1,5 @@
 import { test, expect } from "@playwright/test";
-
-async function loginAsDev(page: import("@playwright/test").Page) {
-  await page.evaluate(() => localStorage.clear());
-  await page.goto("/");
-  await page.getByPlaceholder("Enter username").fill("developer");
-  await page.getByPlaceholder("Enter password").fill("developer");
-  await page.getByRole("button", { name: "Sign In" }).click();
-  await expect(page.getByText("Overview")).toBeVisible({ timeout: 10_000 });
-}
+import { loginAsDev } from "./helpers/login";
 
 test.describe("Code Scanner", () => {
   test.beforeEach(async ({ page }) => {
