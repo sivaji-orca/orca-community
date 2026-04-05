@@ -113,11 +113,17 @@ const BRAND_REPLACEMENTS: Array<{ file: string; patterns: Array<[RegExp, (name: 
   },
 ];
 
-export function forkAndBrand(
+export interface ForkResult {
+  repoPath: string;
+  repoName: string;
+  repoUrl: string | null;
+}
+
+export async function forkAndBrand(
   appName: string,
   description: string,
   targetDir?: string
-): { repoPath: string; repoName: string } {
+): Promise<ForkResult> {
   const repoName = `${appName.toLowerCase().replace(/\s+/g, "-")}-orca`;
   const repoPath = targetDir || path.join(path.dirname(ROOT_DIR), repoName);
 
@@ -154,22 +160,26 @@ export function forkAndBrand(
     }
   } catch { /* git init is best-effort */ }
 
+  let repoUrl: string | null = null;
   const token = getSecret("github_token");
-  const org = getSecret("github_org");
-  if (token && org) {
+
+  if (token) {
     try {
-      createGithubRepo(repoName, description, token, org);
-      const remoteUrl = `https://${org}:${token}@github.com/${org}/${repoName}.git`;
-      execSync(`git remote add origin ${remoteUrl}`, { cwd: repoPath, timeout: 5000 });
+      const ghResult = await createGithubRepo(repoName, description, token);
+      const remoteUrl = `https://${token}@github.com/${ghResult.fullName}.git`;
+      execSync(`git remote add origin "${remoteUrl}"`, { cwd: repoPath, timeout: 5000 });
       execSync('git add -A && git commit -m "Initial branded fork from Orca Community Edition"', { cwd: repoPath, timeout: 15000 });
       execSync("git push -u origin main", { cwd: repoPath, timeout: 30000 });
+      repoUrl = ghResult.htmlUrl;
+
+      await protectBranch(ghResult.fullName, "main", token);
     } catch { /* remote creation is best-effort */ }
   }
 
   const db = getDb();
   db.run("UPDATE branding SET repo_name = ?, forked_at = datetime('now') WHERE id = 1", [repoName]);
 
-  return { repoPath, repoName };
+  return { repoPath, repoName, repoUrl };
 }
 
 function getOriginUrl(): string | null {
@@ -180,10 +190,53 @@ function getOriginUrl(): string | null {
   }
 }
 
-function createGithubRepo(name: string, description: string, token: string, org: string): void {
-  const url = org.includes("/") ? "https://api.github.com/user/repos" : `https://api.github.com/orgs/${org}/repos`;
-  execSync(
-    `curl -s -X POST ${url} -H "Authorization: token ${token}" -H "Content-Type: application/json" -d '${JSON.stringify({ name, description, private: true, auto_init: false })}'`,
-    { timeout: 15000 }
-  );
+async function createGithubRepo(
+  name: string,
+  description: string,
+  token: string
+): Promise<{ fullName: string; htmlUrl: string }> {
+  let org: string | null = null;
+  try { org = getSecret("github_org"); } catch { /* no org configured */ }
+
+  const url = org
+    ? `https://api.github.com/orgs/${org}/repos`
+    : "https://api.github.com/user/repos";
+
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/vnd.github+json",
+    },
+    body: JSON.stringify({ name, description, private: true, auto_init: false }),
+  });
+
+  if (!resp.ok) {
+    const body = await resp.text();
+    throw new Error(`GitHub repo creation failed: ${resp.status} ${body}`);
+  }
+
+  const data = (await resp.json()) as any;
+  return { fullName: data.full_name, htmlUrl: data.html_url };
+}
+
+async function protectBranch(fullName: string, branch: string, token: string): Promise<void> {
+  const url = `https://api.github.com/repos/${fullName}/branches/${branch}/protection`;
+  await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/vnd.github+json",
+    },
+    body: JSON.stringify({
+      required_pull_request_reviews: { required_approving_review_count: 1 },
+      enforce_admins: false,
+      required_status_checks: null,
+      restrictions: null,
+      allow_force_pushes: false,
+      allow_deletions: false,
+    }),
+  });
 }

@@ -9,6 +9,9 @@ Thank you for your interest in contributing! Whether you hit a roadblock during 
 - [Types of Contributions](#types-of-contributions)
 - [Getting Started](#getting-started)
 - [Development Workflow](#development-workflow)
+  - [Community Contributors](#community-contributors)
+  - [Team Contributors](#team-contributors)
+  - [Release Branches](#release-branches)
 - [Commit Message Convention](#commit-message-convention)
 - [Pull Request Process](#pull-request-process)
 - [Code Guidelines](#code-guidelines)
@@ -120,21 +123,60 @@ git fetch upstream
 git rebase upstream/main
 ```
 
-### Team Contributors (Sivaji, Sathish, Rajiv)
+### Team Contributors
 
 Core team members use a two-stage PR flow through dedicated `dev/<name>` branches. See [docs/TEAM_WORKFLOW.md](docs/TEAM_WORKFLOW.md) for the full guide.
 
 ```
 main (protected, production)
- ├── dev/sivaji       ← owner's working branch
- ├── dev/sathish      ← Sathish's integration branch
- └── dev/rajiv        ← Rajiv's integration branch
+ ├── dev/sivaji              ← owner's working branch
+ ├── dev/sathish             ← Sathish
+ ├── dev/rajiv               ← Rajiv
+ ├── dev/leela               ← Leela
+ ├── dev/narendra            ← Narendra
+ ├── dev/srinivas            ← Srinivas
+ ├── dev/sivajinandimandalam ← Sivaji Nandimandalam
+ ├── dev/arjun               ← Arjun
+ ├── dev/mahesh              ← Mahesh
+ ├── dev/rakesh              ← Rakesh
+ └── dev/arun                ← Arun
 ```
 
-1. Fork the repo (Sathish and Rajiv) or work directly (Sivaji)
+1. Fork the repo or work directly on your `dev/<name>` branch
 2. Create feature branches from your `dev/<name>` branch
 3. PR your feature branch to your `dev/<name>` branch in upstream
 4. Owner reviews and merges `dev/<name>` to `main` when ready
+
+### Release Branches
+
+Product-specific release branches are used to accumulate features for a particular domain before merging into `main`. When working on a feature tied to a specific product area, branch from and PR into the corresponding release branch.
+
+| Branch | Scope | Examples |
+|--------|-------|---------|
+| `release/mulesoft` | MuleSoft runtime, API scaffolding, deployment | New project templates, CloudHub deploy, runtime management |
+| `release/salesforce` | Salesforce DevTools, SOQL, Record Browser | Schema Explorer, NLP-to-SOQL, Org Inspector |
+| `release/kafka` | Confluent Cloud, Kafka streaming, CDC sync | Topic management, consumer flows, Schema Registry |
+| `release/cursor` | Cursor AI integration, agent workflows | AI rules, onboarding automation, agent handoff |
+| `release/ai` | NLP-to-SOQL, LLM features, AI tooling | LLM provider config, prompt engineering, template matching |
+
+**Workflow:**
+
+```
+main (protected)
+ ├── release/mulesoft    ← MuleSoft features accumulate here
+ │    ├── feature/new-deploy-target
+ │    └── fix/runtime-startup
+ ├── release/salesforce  ← Salesforce features accumulate here
+ │    ├── feature/bulk-record-edit
+ │    └── fix/soql-pagination
+ ├── release/kafka       ← Kafka features accumulate here
+ ├── release/cursor      ← Cursor AI features accumulate here
+ └── release/ai          ← AI/LLM features accumulate here
+```
+
+1. Branch from the relevant `release/*` branch
+2. PR into the `release/*` branch for review
+3. Once a release branch has a stable set of features, the owner merges it into `main`
 
 ---
 

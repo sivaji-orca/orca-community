@@ -8,6 +8,7 @@ const MASK = "••••••••";
 type SettingsSubTab = "workspaces" | "secrets" | "salesforce" | "team" | "security" | "appearance";
 
 const ACCENT_PRESETS: { id: AccentColor; label: string; swatch: string }[] = [
+  { id: "teal", label: "Teal", swatch: "#14b8a6" },
   { id: "honey", label: "Honey", swatch: "#b45309" },
   { id: "ocean", label: "Ocean", swatch: "#0e7490" },
   { id: "indigo", label: "Indigo", swatch: "#4f46e5" },
@@ -903,14 +904,14 @@ function AppearanceTab() {
   const { mode, accent, setMode, setAccent } = useTheme();
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-8">
+    <section className="rounded-xl border border-border bg-surface p-6 shadow-sm space-y-8">
       <div>
-        <h2 className="text-lg font-medium text-slate-800 mb-1">Appearance</h2>
-        <p className="text-sm text-slate-500">Customize the look and feel of your dashboard.</p>
+        <h2 className="text-lg font-medium text-text mb-1">Appearance</h2>
+        <p className="text-sm text-text-muted">Customize the look and feel of your dashboard.</p>
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">Mode</h3>
+        <h3 className="text-sm font-semibold text-text mb-3">Mode</h3>
         <div className="flex gap-3">
           {MODE_OPTIONS.map((opt) => (
             <button
@@ -920,7 +921,7 @@ function AppearanceTab() {
               className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer ${
                 mode === opt.id
                   ? "border-primary bg-primary-bg-subtle text-primary-text shadow-sm"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  : "border-border text-text-muted hover:border-border hover:bg-surface-alt"
               }`}
             >
               <span className="text-lg">{opt.icon}</span>
@@ -931,8 +932,8 @@ function AppearanceTab() {
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">Accent color</h3>
-        <div className="flex gap-3">
+        <h3 className="text-sm font-semibold text-text mb-3">Accent color</h3>
+        <div className="flex gap-3 flex-wrap">
           {ACCENT_PRESETS.map((preset) => (
             <button
               key={preset.id}
@@ -941,14 +942,14 @@ function AppearanceTab() {
               className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer min-w-[72px] ${
                 accent === preset.id
                   ? "border-primary shadow-sm bg-primary-bg-subtle"
-                  : "border-slate-200 hover:border-slate-300"
+                  : "border-border hover:border-border"
               }`}
             >
               <span
-                className="w-8 h-8 rounded-full shadow-inner ring-2 ring-white"
+                className="w-8 h-8 rounded-full shadow-inner ring-2 ring-surface"
                 style={{ backgroundColor: preset.swatch }}
               />
-              <span className="text-xs font-medium text-slate-600">{preset.label}</span>
+              <span className="text-xs font-medium text-text-muted">{preset.label}</span>
               {accent === preset.id && (
                 <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -959,8 +960,8 @@ function AppearanceTab() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-        <p className="text-xs text-slate-500">
+      <div className="rounded-xl border border-border bg-surface-alt p-4">
+        <p className="text-xs text-text-muted">
           Changes are applied instantly and saved to your browser. They persist across sessions.
         </p>
       </div>

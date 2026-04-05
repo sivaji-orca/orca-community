@@ -29,13 +29,13 @@ router.post("/", (req, res) => {
   }
 });
 
-router.post("/fork", (req, res) => {
+router.post("/fork", async (req, res) => {
   const { appName, description, targetDir } = req.body;
   if (!appName) {
     return res.status(400).json({ error: "appName is required" });
   }
   try {
-    const result = forkAndBrand(appName, description || "", targetDir);
+    const result = await forkAndBrand(appName, description || "", targetDir);
     res.json({ success: true, ...result });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

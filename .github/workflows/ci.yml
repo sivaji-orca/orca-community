@@ -2,13 +2,17 @@ name: CI
 
 on:
   push:
-    branches: [main, 'dev/**']
+    branches: [main, 'dev/**', 'release/**']
   pull_request:
-    branches: [main, 'dev/**']
+    branches: [main, 'dev/**', 'release/**']
+  workflow_dispatch:
 
 jobs:
-  backend:
-    name: Backend Tests
+  # ──────────────────────────────────────────────────────────
+  # DEV GATE: unit tests, lint, typecheck, build
+  # ──────────────────────────────────────────────────────────
+  dev-backend:
+    name: "Dev: Backend Unit Tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,12 +25,12 @@ jobs:
         working-directory: backend
         run: bun install
 
-      - name: Run tests
+      - name: Run unit tests
         working-directory: backend
-        run: bun test
+        run: bun test src/__tests__/unit/ src/__tests__/auth.test.ts src/__tests__/schema.test.ts src/__tests__/analytics.test.ts
 
-  frontend:
-    name: Frontend Lint, Build & Test
+  dev-frontend:
+    name: "Dev: Frontend Lint, Build & Test"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,10 +51,106 @@ jobs:
         working-directory: frontend
         run: bunx tsc -b --noEmit
 
-      - name: Run tests
+      - name: Run unit tests
         working-directory: frontend
         run: bun run test
 
       - name: Build
         working-directory: frontend
         run: bun run build
+
+  # ──────────────────────────────────────────────────────────
+  # QA GATE: integration tests + E2E
+  # ──────────────────────────────────────────────────────────
+  qa-integration:
+    name: "QA: API Integration Tests"
+    needs: [dev-backend, dev-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: backend
+        run: bun install
+
+      - name: Seed database
+        working-directory: backend
+        run: bun run seed
+
+      - name: Run integration tests
+        working-directory: backend
+        run: bun test src/__tests__/integration/
+
+  qa-e2e:
+    name: "QA: Playwright E2E Tests"
+    needs: [dev-backend, dev-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: bun install
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install
+
+      - name: Build frontend
+        working-directory: frontend
+        run: bun run build
+
+      - name: Seed database
+        working-directory: backend
+        run: bun run seed
+
+      - name: Install E2E dependencies
+        working-directory: e2e
+        run: bun install
+
+      - name: Install Playwright browsers
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: e2e
+        run: npx playwright test
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 14
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: e2e/test-results/
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────
+  # UAT GATE: manual approval placeholder
+  # ──────────────────────────────────────────────────────────
+  uat:
+    name: "UAT: Ready for Manual Testing"
+    needs: [qa-integration, qa-e2e]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
+    environment: uat
+    steps:
+      - name: UAT gate passed
+        run: echo "All Dev and QA gates passed. Ready for UAT manual testing."

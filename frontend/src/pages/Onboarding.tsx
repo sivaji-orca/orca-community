@@ -61,7 +61,7 @@ function StepIndicator({ current, onNavigate }: { current: Step; onNavigate: (s:
                   ? "bg-emerald-500 text-white hover:bg-emerald-600 cursor-pointer"
                   : active
                     ? "bg-primary text-white ring-4 ring-primary-bg cursor-default"
-                    : "bg-slate-200 text-slate-500 cursor-default"
+                    : "bg-border text-text-muted cursor-default"
               }`}
             >
               {done ? (
@@ -73,7 +73,7 @@ function StepIndicator({ current, onNavigate }: { current: Step; onNavigate: (s:
               )}
             </button>
             {i < STEPS.length - 1 && (
-              <div className={`w-8 h-0.5 ${i < currentIdx ? "bg-emerald-400" : "bg-slate-200"}`} />
+              <div className={`w-8 h-0.5 ${i < currentIdx ? "bg-emerald-400" : "bg-border"}`} />
             )}
           </div>
         );
@@ -113,10 +113,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [brandSaving, setBrandSaving] = useState(false);
   const [loadingGuide, setLoadingGuide] = useState<string | null>(null);
 
+  const [forkInProgress, setForkInProgress] = useState(false);
+  const [forkResult, setForkResult] = useState<{ repoUrl: string | null; repoPath: string; repoName: string } | null>(null);
+  const [forkError, setForkError] = useState<string | null>(null);
+
   const [configForm, setConfigForm] = useState({
     anypoint_client_id: "",
     anypoint_client_secret: "",
     anypoint_org_id: "",
+    github_username: "",
     github_token: "",
     postman_api_key: "",
     salesforce_instance_url: "",
@@ -185,7 +190,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         if (configForm.anypoint_client_secret) body.anypoint.client_secret = configForm.anypoint_client_secret;
         if (configForm.anypoint_org_id) body.anypoint.org_id = configForm.anypoint_org_id;
       }
-      if (configForm.github_token) body.github = { token: configForm.github_token };
+      if (configForm.github_token || configForm.github_username) {
+        body.github = {} as Record<string, string>;
+        if (configForm.github_token) body.github.token = configForm.github_token;
+        if (configForm.github_username) body.github.org = configForm.github_username;
+      }
       if (configForm.postman_api_key) body.postman = { api_key: configForm.postman_api_key };
       if (configForm.salesforce_instance_url || configForm.salesforce_username || configForm.salesforce_password || configForm.salesforce_security_token) {
         body.salesforce = {};
@@ -236,54 +245,54 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   ) ?? [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-bg-subtle via-white to-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-bg-subtle via-surface to-surface-alt flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <StepIndicator current={step} onNavigate={setStep} />
 
         {/* ===== STEP 0: BRAND YOUR APP ===== */}
         {step === "brand" && (
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-10">
+          <div className="bg-surface rounded-2xl shadow-xl border border-border p-10">
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-bg">
                 <span className="text-white font-bold text-2xl">{brandName?.[0]?.toUpperCase() || "O"}</span>
               </div>
-              <h1 className="text-2xl font-bold text-slate-800 mb-1">Brand Your App</h1>
-              <p className="text-sm text-slate-500">
+              <h1 className="text-2xl font-bold text-text mb-1">Brand Your App</h1>
+              <p className="text-sm text-text-muted">
                 Give your instance a name and identity, or keep the defaults.
               </p>
             </div>
 
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">App Name</label>
+                <label className="block text-sm font-medium text-text mb-1.5">App Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Dhurandhar, Apex Tools, MyOrg Integrations"
                   value={brandName}
                   onChange={(e) => setBrandName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-ring outline-none transition-all"
+                  className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-ring outline-none transition-all"
                   autoFocus
                 />
-                <p className="text-xs text-slate-400 mt-1">This will appear in the header, login screen, and page title.</p>
+                <p className="text-xs text-text-muted mt-1">This will appear in the header, login screen, and page title.</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
+                <label className="block text-sm font-medium text-text mb-1.5">Description</label>
                 <textarea
                   placeholder="MuleSoft Developer Productivity Tool"
                   value={brandDescription}
                   onChange={(e) => setBrandDescription(e.target.value)}
                   rows={2}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-ring outline-none transition-all resize-none"
+                  className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-ring outline-none transition-all resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Logo <span className="text-slate-400 font-normal">(optional SVG)</span>
+                <label className="block text-sm font-medium text-text mb-1.5">
+                  Logo <span className="text-text-muted font-normal">(optional SVG)</span>
                 </label>
                 <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-slate-300 rounded-lg text-sm text-slate-500 hover:border-primary hover:text-primary cursor-pointer transition-colors">
+                  <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-border rounded-lg text-sm text-text-muted hover:border-primary hover:text-primary cursor-pointer transition-colors">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -303,7 +312,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   </label>
                   {brandLogoPreview && (
                     <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center overflow-hidden bg-white" dangerouslySetInnerHTML={{ __html: brandLogoPreview }} />
+                      <div className="w-10 h-10 rounded-lg border border-border flex items-center justify-center overflow-hidden bg-surface" dangerouslySetInnerHTML={{ __html: brandLogoPreview }} />
                       <button onClick={() => setBrandLogoPreview(null)} className="text-xs text-red-500 hover:text-red-600 cursor-pointer">Remove</button>
                     </div>
                   )}
@@ -314,7 +323,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             <div className="flex items-center justify-between mt-8">
               <button
                 onClick={() => setStep("welcome")}
-                className="text-sm text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-sm text-text-muted hover:text-text cursor-pointer"
               >
                 Skip (use Orca defaults)
               </button>
@@ -350,17 +359,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
         {/* ===== STEP 1: WELCOME ===== */}
         {step === "welcome" && (
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-10 text-center">
+          <div className="bg-surface rounded-2xl shadow-xl border border-border p-10 text-center">
             <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary-bg">
               <span className="text-white font-bold text-3xl">O</span>
             </div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">
+            <h1 className="text-3xl font-bold text-text mb-2">
               Welcome to Orca Community Edition
             </h1>
-            <p className="text-slate-500 mb-2">
+            <p className="text-text-muted mb-2">
               The open-source MuleSoft developer productivity toolkit
             </p>
-            <p className="text-sm text-slate-400 mb-8 max-w-md mx-auto">
+            <p className="text-sm text-text-muted mb-8 max-w-md mx-auto">
               Let's get you set up in under 5 minutes. We'll check your system,
               install any missing tools, and have you building your first API in no time.
             </p>
@@ -372,7 +381,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             </button>
             <button
               onClick={onComplete}
-              className="block mx-auto mt-4 text-sm text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="block mx-auto mt-4 text-sm text-text-muted hover:text-text cursor-pointer"
             >
               Skip setup — I know what I'm doing
             </button>
@@ -381,16 +390,16 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
         {/* ===== STEP 2: PREREQUISITE CHECK ===== */}
         {step === "check" && (
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-            <h2 className="text-xl font-bold text-slate-800 mb-1">System Prerequisites</h2>
-            <p className="text-sm text-slate-500 mb-6">
+          <div className="bg-surface rounded-2xl shadow-xl border border-border p-8">
+            <h2 className="text-xl font-bold text-text mb-1">System Prerequisites</h2>
+            <p className="text-sm text-text-muted mb-6">
               Checking your development environment...
             </p>
 
             {checking && !prereqs && (
               <div className="flex items-center justify-center py-12">
                 <div className="w-8 h-8 border-4 border-primary-bg border-t-primary rounded-full animate-spin" />
-                <span className="ml-3 text-slate-500">Scanning your system...</span>
+                <span className="ml-3 text-text-muted">Scanning your system...</span>
               </div>
             )}
 
@@ -400,7 +409,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               return (
                 <>
                   <div className="space-y-3 mb-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Required</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">Required</p>
                     {required.map((p) => {
                       const passed = p.installed && p.meetsMinimum;
                       return (
@@ -419,8 +428,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                               )}
                             </div>
                             <div>
-                              <div className="font-semibold text-slate-800 text-sm">{p.label}</div>
-                              <div className="text-xs text-slate-500">{p.description}</div>
+                              <div className="font-semibold text-text text-sm">{p.label}</div>
+                              <div className="text-xs text-text-muted">{p.description}</div>
                             </div>
                           </div>
                           <div className="text-right shrink-0 ml-4">
@@ -437,7 +446,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
                   {optional.length > 0 && (
                     <div className="space-y-3 mb-6">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Optional</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">Optional</p>
                       {optional.map((p) => {
                         const passed = p.installed && p.meetsMinimum;
                         return (
@@ -458,11 +467,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                 )}
                               </div>
                               <div>
-                                <div className="font-semibold text-slate-800 text-sm flex items-center gap-2">
+                                <div className="font-semibold text-text text-sm flex items-center gap-2">
                                   {p.label}
                                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-600 font-medium">optional</span>
                                 </div>
-                                <div className="text-xs text-slate-500">{p.description}</div>
+                                <div className="text-xs text-text-muted">{p.description}</div>
                               </div>
                             </div>
                             <div className="text-right shrink-0 ml-4">
@@ -475,8 +484,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                           </div>
                         );
                       })}
-                      <p className="text-xs text-slate-400 pl-1">
-                        These are downloaded automatically when you run <code className="bg-slate-100 px-1 rounded">./scripts/setup.sh</code>. You can explore the dashboard without them.
+                      <p className="text-xs text-text-muted pl-1">
+                        These are downloaded automatically when you run <code className="bg-surface-alt px-1 rounded">./scripts/setup.sh</code>. You can explore the dashboard without them.
                       </p>
                     </div>
                   )}
@@ -505,7 +514,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setStep("welcome")}
-                className="text-sm text-slate-500 hover:text-slate-700 cursor-pointer"
+                className="text-sm text-text-muted hover:text-text cursor-pointer"
               >
                 &larr; Back
               </button>
@@ -513,7 +522,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 <button
                   onClick={checkPrereqs}
                   disabled={checking}
-                  className="px-4 py-2 border border-slate-300 text-slate-600 text-sm rounded-lg hover:bg-slate-50 disabled:opacity-50 font-medium cursor-pointer"
+                  className="px-4 py-2 border border-border text-text-muted text-sm rounded-lg hover:bg-surface-alt disabled:opacity-50 font-medium cursor-pointer"
                 >
                   {checking ? "Checking..." : "Re-check"}
                 </button>
@@ -542,9 +551,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
         {/* ===== STEP 3: INSTALL MISSING TOOLS ===== */}
         {step === "install" && (
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-            <h2 className="text-xl font-bold text-slate-800 mb-1">Install Missing Tools</h2>
-            <p className="text-sm text-slate-500 mb-6">
+          <div className="bg-surface rounded-2xl shadow-xl border border-border p-8">
+            <h2 className="text-xl font-bold text-text mb-1">Install Missing Tools</h2>
+            <p className="text-sm text-text-muted mb-6">
               Run these commands in your terminal, then come back and re-check.
             </p>
 
@@ -558,7 +567,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   return (
                     <div key={p.name} className="rounded-xl border border-red-200 bg-red-50/30 p-5">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="font-semibold text-slate-800">{p.label}</span>
+                        <span className="font-semibold text-text">{p.label}</span>
                         {!guide && (
                           <button onClick={() => fetchGuide(p.name)} disabled={loadingGuide === p.name} className="text-xs text-primary hover:text-primary-hover font-medium cursor-pointer">
                             {loadingGuide === p.name ? "Loading..." : "More details"}
@@ -572,8 +581,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                       {guide && (
                         <div className="mt-3 space-y-1.5">
                           {guide.steps.map((s, i) => (
-                            <p key={i} className="text-xs text-slate-600 flex gap-2">
-                              <span className="text-slate-400 shrink-0">{i + 1}.</span>
+                            <p key={i} className="text-xs text-text-muted flex gap-2">
+                              <span className="text-text-muted shrink-0">{i + 1}.</span>
                               <span className="whitespace-pre-wrap">{s}</span>
                             </p>
                           ))}
@@ -592,13 +601,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   Optional tools ({failingOptional.length} not installed) — expand for install commands
                 </summary>
                 <div className="px-5 pb-5 space-y-4 pt-2">
-                  <p className="text-xs text-slate-500">These are auto-downloaded by <code className="bg-slate-100 px-1 rounded">./scripts/setup.sh</code>. Install them later when you need local Mule Runtime.</p>
+                  <p className="text-xs text-text-muted">These are auto-downloaded by <code className="bg-surface-alt px-1 rounded">./scripts/setup.sh</code>. Install them later when you need local Mule Runtime.</p>
                   {failingOptional.map((p) => {
                     const osKey = prereqs?.os || "macos";
                     const command = p.installCommand[osKey] || Object.values(p.installCommand)[0];
                     return (
-                      <div key={p.name} className="rounded-lg border border-sky-100 bg-white p-4">
-                        <span className="font-semibold text-slate-800 text-sm">{p.label}</span>
+                      <div key={p.name} className="rounded-lg border border-sky-100 bg-surface p-4">
+                        <span className="font-semibold text-text text-sm">{p.label}</span>
                         <div className="bg-slate-900 rounded-lg p-3 mt-2 flex items-center justify-between gap-3">
                           <code className="text-sm text-emerald-400 font-mono break-all">{command}</code>
                           <CopyButton text={command} />
@@ -610,9 +619,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </details>
             )}
 
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 mb-6">
-              <p className="text-sm text-slate-600">
-                <strong className="text-slate-700">Using Cursor IDE?</strong>{" "}
+            <div className="rounded-lg border border-border bg-surface-alt p-4 mb-6">
+              <p className="text-sm text-text-muted">
+                <strong className="text-text">Using Cursor IDE?</strong>{" "}
                 Open the terminal panel (Ctrl+`) and paste the commands above. The Cursor agent can also run them for you —
                 just say <em>"install Java 17 and Maven"</em>.
               </p>
@@ -621,7 +630,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setStep("check")}
-                className="text-sm text-slate-500 hover:text-slate-700 cursor-pointer"
+                className="text-sm text-text-muted hover:text-text cursor-pointer"
               >
                 &larr; Back
               </button>
@@ -637,14 +646,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
         {/* ===== STEP 4: CONFIGURE ===== */}
         {step === "configure" && (
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-            <h2 className="text-xl font-bold text-slate-800 mb-1">Configure Credentials</h2>
-            <p className="text-sm text-slate-500 mb-6">
+          <div className="bg-surface rounded-2xl shadow-xl border border-border p-8">
+            <h2 className="text-xl font-bold text-text mb-1">Configure Credentials</h2>
+            <p className="text-sm text-text-muted mb-6">
               Connect to MuleSoft Anypoint Platform directly from here — no terminal needed.
             </p>
 
             {/* Section tabs */}
-            <div className="flex gap-1 mb-6 bg-slate-100 rounded-lg p-1">
+            <div className="flex gap-1 mb-6 bg-surface-alt rounded-lg p-1">
               {(
                 [
                   { id: "anypoint" as const, label: "Anypoint", icon: "M" },
@@ -659,8 +668,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   onClick={() => setConfigSection(tab.id)}
                   className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all cursor-pointer ${
                     configSection === tab.id
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
+                      ? "bg-surface-raised text-text shadow-sm"
+                      : "text-text-muted hover:text-text"
                   }`}
                 >
                   <span className="w-5 h-5 rounded bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">
@@ -674,8 +683,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             {/* Anypoint section */}
             {configSection === "anypoint" && (
               <div className="space-y-4 mb-6">
-                <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
-                  <p className="text-sm text-amber-800">
+                <div className="rounded-xl border border-primary-ring bg-primary-bg-subtle p-4">
+                  <p className="text-sm text-primary-text">
                     <strong>Where do I get these?</strong>{" "}
                     Log in to{" "}
                     <a
@@ -700,30 +709,30 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Client ID</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Client ID</label>
                   <input
                     type="text"
                     placeholder="e.g. a1b2c3d4e5f6a1b2c3d4e5f6"
                     value={configForm.anypoint_client_id}
                     onChange={(e) => setConfigForm((f) => ({ ...f, anypoint_client_id: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                    className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Client Secret</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Client Secret</label>
                   <div className="relative">
                     <input
                       type={showSecrets["client_secret"] ? "text" : "password"}
                       placeholder="e.g. A1b2C3d4E5f6G7h8I9j0..."
                       value={configForm.anypoint_client_secret}
                       onChange={(e) => setConfigForm((f) => ({ ...f, anypoint_client_secret: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                      className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
                     />
                     <button
                       type="button"
                       onClick={() => toggleSecret("client_secret")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text cursor-pointer"
                       title={showSecrets["client_secret"] ? "Hide" : "Show"}
                     >
                       {showSecrets["client_secret"] ? (
@@ -736,15 +745,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Organization ID <span className="text-slate-400 font-normal">(optional)</span>
+                  <label className="block text-sm font-medium text-text mb-1.5">
+                    Organization ID <span className="text-text-muted font-normal">(optional)</span>
                   </label>
                   <input
                     type="text"
                     placeholder="e.g. 12345678-abcd-1234-abcd-123456789012"
                     value={configForm.anypoint_org_id}
                     onChange={(e) => setConfigForm((f) => ({ ...f, anypoint_org_id: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                    className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
                   />
                 </div>
               </div>
@@ -763,38 +772,38 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Instance URL</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Instance URL</label>
                   <input
                     type="text"
                     placeholder="https://your-org.develop.my.salesforce.com"
                     value={configForm.salesforce_instance_url}
                     onChange={(e) => setConfigForm((f) => ({ ...f, salesforce_instance_url: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                    className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Username</label>
                   <input
                     type="text"
                     placeholder="you@example.com"
                     value={configForm.salesforce_username}
                     onChange={(e) => setConfigForm((f) => ({ ...f, salesforce_username: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                    className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Password</label>
                   <div className="relative">
                     <input
                       type={showSecrets["sf_password"] ? "text" : "password"}
                       placeholder="Your Salesforce password"
                       value={configForm.salesforce_password}
                       onChange={(e) => setConfigForm((f) => ({ ...f, salesforce_password: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                      className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
                     />
-                    <button type="button" onClick={() => toggleSecret("sf_password")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <button type="button" onClick={() => toggleSecret("sf_password")} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text cursor-pointer">
                       {showSecrets["sf_password"] ? (
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
                       ) : (
@@ -805,16 +814,16 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Security Token</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Security Token</label>
                   <div className="relative">
                     <input
                       type={showSecrets["sf_token"] ? "text" : "password"}
                       placeholder="Emailed to you after reset"
                       value={configForm.salesforce_security_token}
                       onChange={(e) => setConfigForm((f) => ({ ...f, salesforce_security_token: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                      className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
                     />
-                    <button type="button" onClick={() => toggleSecret("sf_token")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <button type="button" onClick={() => toggleSecret("sf_token")} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text cursor-pointer">
                       {showSecrets["sf_token"] ? (
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
                       ) : (
@@ -822,7 +831,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                       )}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">Go to Setup &rarr; Reset My Security Token. Check your email.</p>
+                  <p className="text-xs text-text-muted mt-1">Go to Setup &rarr; Reset My Security Token. Check your email.</p>
                 </div>
               </div>
             )}
@@ -839,16 +848,16 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Database Connection URL</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Database Connection URL</label>
                   <div className="relative">
                     <input
                       type={showSecrets["neon_url"] ? "text" : "password"}
                       placeholder="postgresql://user:pass@ep-xxx.region.aws.neon.tech/neondb?sslmode=require"
                       value={configForm.neon_database_url}
                       onChange={(e) => setConfigForm((f) => ({ ...f, neon_database_url: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                      className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
                     />
-                    <button type="button" onClick={() => toggleSecret("neon_url")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <button type="button" onClick={() => toggleSecret("neon_url")} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text cursor-pointer">
                       {showSecrets["neon_url"] ? (
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
                       ) : (
@@ -856,7 +865,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                       )}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">Find it in your Neon dashboard &rarr; Connection Details &rarr; Connection string.</p>
+                  <p className="text-xs text-text-muted mt-1">Find it in your Neon dashboard &rarr; Connection Details &rarr; Connection string.</p>
                 </div>
 
                 <button
@@ -909,38 +918,38 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Bootstrap Servers</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Bootstrap Servers</label>
                   <input
                     type="text"
                     placeholder="pkc-xxxxx.us-east-1.aws.confluent.cloud:9092"
                     value={configForm.kafka_bootstrap_servers}
                     onChange={(e) => setConfigForm((f) => ({ ...f, kafka_bootstrap_servers: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                    className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Cluster API Key</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Cluster API Key</label>
                   <input
                     type="text"
                     placeholder="ABCDEFGHIJKLMNOP"
                     value={configForm.kafka_api_key}
                     onChange={(e) => setConfigForm((f) => ({ ...f, kafka_api_key: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                    className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Cluster API Secret</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Cluster API Secret</label>
                   <div className="relative">
                     <input
                       type={showSecrets["kafka_secret"] ? "text" : "password"}
                       placeholder="Your Confluent Cloud API secret"
                       value={configForm.kafka_api_secret}
                       onChange={(e) => setConfigForm((f) => ({ ...f, kafka_api_secret: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                      className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
                     />
-                    <button type="button" onClick={() => toggleSecret("kafka_secret")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <button type="button" onClick={() => toggleSecret("kafka_secret")} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text cursor-pointer">
                       {showSecrets["kafka_secret"] ? (
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
                       ) : (
@@ -950,43 +959,43 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-200">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Schema Registry</p>
+                <div className="pt-2 border-t border-border">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">Schema Registry</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Schema Registry URL</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Schema Registry URL</label>
                   <input
                     type="text"
                     placeholder="https://psrc-xxxxx.us-east-1.aws.confluent.cloud"
                     value={configForm.kafka_schema_registry_url}
                     onChange={(e) => setConfigForm((f) => ({ ...f, kafka_schema_registry_url: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                    className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Schema Registry API Key</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Schema Registry API Key</label>
                   <input
                     type="text"
                     placeholder="SR API Key"
                     value={configForm.kafka_sr_api_key}
                     onChange={(e) => setConfigForm((f) => ({ ...f, kafka_sr_api_key: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                    className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Schema Registry API Secret</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Schema Registry API Secret</label>
                   <div className="relative">
                     <input
                       type={showSecrets["kafka_sr_secret"] ? "text" : "password"}
                       placeholder="SR API Secret"
                       value={configForm.kafka_sr_api_secret}
                       onChange={(e) => setConfigForm((f) => ({ ...f, kafka_sr_api_secret: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                      className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
                     />
-                    <button type="button" onClick={() => toggleSecret("kafka_sr_secret")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <button type="button" onClick={() => toggleSecret("kafka_sr_secret")} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text cursor-pointer">
                       {showSecrets["kafka_sr_secret"] ? (
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
                       ) : (
@@ -1034,23 +1043,35 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             {/* GitHub & Postman section */}
             {configSection === "more" && (
               <div className="space-y-4 mb-6">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-text-muted">
                   These are optional — configure them now or later in Settings.
                 </p>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">GitHub Token</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">GitHub Username</label>
+                  <input
+                    type="text"
+                    placeholder="your-github-username"
+                    value={configForm.github_username}
+                    onChange={(e) => setConfigForm((f) => ({ ...f, github_username: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono"
+                  />
+                  <p className="text-xs text-text-muted mt-1">Your GitHub username or org — the branded repo will be created here.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text mb-1.5">GitHub Token</label>
                   <div className="relative">
                     <input
                       type={showSecrets["github_token"] ? "text" : "password"}
                       placeholder="ghp_..."
                       value={configForm.github_token}
                       onChange={(e) => setConfigForm((f) => ({ ...f, github_token: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                      className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
                     />
                     <button
                       type="button"
                       onClick={() => toggleSecret("github_token")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text cursor-pointer"
                     >
                       {showSecrets["github_token"] ? (
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
@@ -1059,23 +1080,23 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                       )}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">Enables Git push/PR features. Needs <code className="bg-slate-100 px-1 rounded">repo</code> scope.</p>
+                  <p className="text-xs text-text-muted mt-1">Enables Git push/PR features. Needs <code className="bg-surface-alt px-1 rounded">repo</code> scope.</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Postman API Key</label>
+                  <label className="block text-sm font-medium text-text mb-1.5">Postman API Key</label>
                   <div className="relative">
                     <input
                       type={showSecrets["postman_key"] ? "text" : "password"}
                       placeholder="PMAK-..."
                       value={configForm.postman_api_key}
                       onChange={(e) => setConfigForm((f) => ({ ...f, postman_api_key: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
+                      className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary-bg outline-none transition-all font-mono pr-12"
                     />
                     <button
                       type="button"
                       onClick={() => toggleSecret("postman_key")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text cursor-pointer"
                     >
                       {showSecrets["postman_key"] ? (
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" /></svg>
@@ -1084,7 +1105,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                       )}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">Enables collection sync. Get it from Postman &rarr; Settings &rarr; API Keys.</p>
+                  <p className="text-xs text-text-muted mt-1">Enables collection sync. Get it from Postman &rarr; Settings &rarr; API Keys.</p>
                 </div>
               </div>
             )}
@@ -1136,7 +1157,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setStep("check")}
-                className="text-sm text-slate-500 hover:text-slate-700 cursor-pointer"
+                className="text-sm text-text-muted hover:text-text cursor-pointer"
               >
                 &larr; Back
               </button>
@@ -1166,7 +1187,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   onClick={() => setStep("ready")}
                   className={`px-6 py-2 text-sm rounded-lg font-semibold cursor-pointer ${
                     hasAnyCredential
-                      ? "border border-slate-300 text-slate-600 hover:bg-slate-50"
+                      ? "border border-border text-text-muted hover:bg-surface-alt"
                       : "bg-primary text-white hover:bg-primary-hover"
                   }`}
                 >
@@ -1177,9 +1198,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
             {/* No-creds helper */}
             {!hasAnyCredential && (
-              <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm text-slate-600">
-                  <strong className="text-slate-700">Don't have credentials yet?</strong>{" "}
+              <div className="mt-6 rounded-xl border border-border bg-surface-alt p-4">
+                <p className="text-sm text-text-muted">
+                  <strong className="text-text">Don't have credentials yet?</strong>{" "}
                   No problem — you can explore the dashboard, create local projects with mock services,
                   and add Anypoint credentials later from <strong>Settings &rarr; Secrets</strong>.
                 </p>
@@ -1190,30 +1211,114 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
         {/* ===== STEP 5: READY ===== */}
         {step === "ready" && (
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-10 text-center">
+          <div className="bg-surface rounded-2xl shadow-xl border border-border p-10 text-center">
             <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center mx-auto mb-6">
               <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">You're All Set!</h2>
-            <p className="text-slate-500 mb-8 max-w-md mx-auto">
+            <h2 className="text-2xl font-bold text-text mb-2">You're All Set!</h2>
+            <p className="text-text-muted mb-8 max-w-md mx-auto">
               Your environment is ready. Log in to explore the dashboard, create your first
               MuleSoft API project, and see real-time monitoring in action.
             </p>
 
-            <div className="bg-slate-50 rounded-xl border border-slate-200 p-5 mb-8 max-w-sm mx-auto">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+            {/* Create branded repo section */}
+            {brandName && brandName !== "Orca Community Edition" && configForm.github_token && !forkResult && (
+              <div className="bg-surface-alt rounded-xl border border-border p-6 mb-8 max-w-md mx-auto text-left">
+                <h3 className="text-sm font-semibold text-text mb-2 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Create Your Private App Repository
+                </h3>
+                <p className="text-xs text-text-muted mb-4">
+                  We'll create a private GitHub repo called <code className="bg-surface px-1 rounded font-mono">{brandName.toLowerCase().replace(/\s+/g, "-")}-orca</code>
+                  {configForm.github_username ? ` under ${configForm.github_username}` : " under your GitHub account"}, push
+                  the branded code, and protect the main branch.
+                </p>
+                {forkError && (
+                  <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+                    {forkError}
+                  </div>
+                )}
+                <button
+                  onClick={async () => {
+                    setForkInProgress(true);
+                    setForkError(null);
+                    try {
+                      const resp = await fetch("/api/branding/fork", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ appName: brandName, description: brandDescription }),
+                      });
+                      const data = await resp.json();
+                      if (!resp.ok) throw new Error(data.error || "Fork failed");
+                      setForkResult({ repoUrl: data.repoUrl, repoPath: data.repoPath, repoName: data.repoName });
+                    } catch (err: any) {
+                      setForkError(err.message || "Something went wrong creating the repo.");
+                    } finally {
+                      setForkInProgress(false);
+                    }
+                  }}
+                  disabled={forkInProgress}
+                  className="w-full px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-hover transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {forkInProgress ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>
+                      Creating repo, pushing code &amp; protecting branch...
+                    </>
+                  ) : (
+                    "Create My App Repo"
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Fork success */}
+            {forkResult && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-6 mb-8 max-w-md mx-auto text-left">
+                <h3 className="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Repository Created Successfully
+                </h3>
+                <div className="space-y-2 text-xs text-text-muted">
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-text shrink-0">Repo:</span>
+                    {forkResult.repoUrl ? (
+                      <a href={forkResult.repoUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
+                        {forkResult.repoUrl}
+                      </a>
+                    ) : (
+                      <span className="font-mono">{forkResult.repoName}</span>
+                    )}
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-text shrink-0">Path:</span>
+                    <span className="font-mono break-all">{forkResult.repoPath}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-emerald-400/80 mt-3">
+                  Main branch is protected — changes require a pull request with at least one approval.
+                </p>
+              </div>
+            )}
+
+            <div className="bg-surface-alt rounded-xl border border-border p-5 mb-8 max-w-sm mx-auto">
+              <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">
                 Default Login Credentials
               </p>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Developer</span>
-                  <span className="font-mono font-medium text-slate-800">developer / developer</span>
+                  <span className="text-text-muted">Developer</span>
+                  <span className="font-mono font-medium text-text">developer / developer</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Administrator</span>
-                  <span className="font-mono font-medium text-slate-800">admin / admin</span>
+                  <span className="text-text-muted">Administrator</span>
+                  <span className="font-mono font-medium text-text">admin / admin</span>
                 </div>
               </div>
             </div>
@@ -1225,14 +1330,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               >
                 Go to Dashboard
               </button>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-text-muted">
                 Tip: After logging in, head to the <strong>New Project</strong> tab to scaffold your first API.
               </p>
             </div>
 
             <button
               onClick={() => setStep("configure")}
-              className="mt-6 text-sm text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="mt-6 text-sm text-text-muted hover:text-text cursor-pointer"
             >
               &larr; Back to Configure
             </button>

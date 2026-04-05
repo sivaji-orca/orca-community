@@ -27,7 +27,7 @@ export function Login({ onLogin, onRestartOnboarding }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-bg-subtle via-white to-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-bg-subtle via-surface to-surface-alt flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           {branding.logoSvg ? (
@@ -37,13 +37,13 @@ export function Login({ onLogin, onRestartOnboarding }: LoginProps) {
               <span className="text-white font-bold text-2xl">{branding.appShortName[0]}</span>
             </div>
           )}
-          <h1 className="text-3xl font-bold text-slate-800">{branding.appShortName}</h1>
-          <p className="text-slate-500 mt-1">{branding.description}</p>
+          <h1 className="text-3xl font-bold text-text">{branding.appShortName}</h1>
+          <p className="text-text-muted mt-1">{branding.description}</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-          <h2 className="text-lg font-semibold text-slate-700 mb-1">Sign in</h2>
-          <p className="text-sm text-slate-400 mb-6">
+        <div className="bg-surface rounded-2xl shadow-xl border border-border p-8">
+          <h2 className="text-lg font-semibold text-text mb-1">Sign in</h2>
+          <p className="text-sm text-text-muted mb-6">
             Enter your credentials to continue
           </p>
 
@@ -55,24 +55,24 @@ export function Login({ onLogin, onRestartOnboarding }: LoginProps) {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+              <label className="block text-sm font-medium text-text mb-1">Username</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary-ring outline-none transition-all"
+                className="w-full px-4 py-2.5 rounded-lg border border-border bg-surface text-text focus:border-primary focus:ring-2 focus:ring-primary-ring outline-none transition-all"
                 placeholder="Enter username"
                 required
                 autoFocus
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-text mb-1">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary-ring outline-none transition-all"
+                className="w-full px-4 py-2.5 rounded-lg border border-border bg-surface text-text focus:border-primary focus:ring-2 focus:ring-primary-ring outline-none transition-all"
                 placeholder="Enter password"
                 required
               />
@@ -86,10 +86,10 @@ export function Login({ onLogin, onRestartOnboarding }: LoginProps) {
             </button>
           </form>
 
-          <div className="mt-5 pt-4 border-t border-slate-100">
-            <p className="text-xs text-slate-400 text-center">
-              Default credentials: <span className="font-mono text-slate-500">developer / developer</span> or{" "}
-              <span className="font-mono text-slate-500">admin / admin</span>
+          <div className="mt-5 pt-4 border-t border-border">
+            <p className="text-xs text-text-muted text-center">
+              Default credentials: <span className="font-mono text-text-muted">developer / developer</span> or{" "}
+              <span className="font-mono text-text-muted">admin / admin</span>
             </p>
           </div>
         </div>
@@ -105,7 +105,7 @@ export function Login({ onLogin, onRestartOnboarding }: LoginProps) {
               </svg>
               Run Setup Wizard Again
             </button>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-text-muted">
               Re-check prerequisites, configure credentials, or review your setup.
             </p>
           </div>

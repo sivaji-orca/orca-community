@@ -1,13 +1,21 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Login } from "../pages/Login";
+
+beforeEach(() => {
+  vi.mocked(globalThis.fetch).mockReset();
+  vi.mocked(globalThis.fetch).mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(""),
+  } as Response);
+});
 
 describe("Login", () => {
   it("renders the login page with Orca branding", () => {
     render(<Login onLogin={vi.fn()} />);
     expect(screen.getByText("Orca")).toBeInTheDocument();
     expect(screen.getByText("MuleSoft Developer Productivity Tool")).toBeInTheDocument();
-    expect(screen.getByText("Community Edition")).toBeInTheDocument();
   });
 
   it("shows username and password fields directly", () => {

@@ -18,14 +18,14 @@
 }
 
 :root {
-  /* Honey / Mustard Yellow — default accent */
-  --c-primary: #b45309;
-  --c-primary-hover: #92400e;
-  --c-primary-light: #d97706;
-  --c-primary-ring: #fbbf24;
-  --c-primary-bg: #fef3c7;
-  --c-primary-bg-subtle: #fffbeb;
-  --c-primary-text: #78350f;
+  /* Teal — default accent (matches orcaesb.com) */
+  --c-primary: #14b8a6;
+  --c-primary-hover: #0d9488;
+  --c-primary-light: #2dd4bf;
+  --c-primary-ring: #5eead4;
+  --c-primary-bg: #ccfbf1;
+  --c-primary-bg-subtle: #f0fdfa;
+  --c-primary-text: #115e59;
 
   /* Surfaces — light mode */
   --c-surface: #ffffff;
@@ -54,6 +54,16 @@
 }
 
 /* ── Accent presets ──────────────────────────────────────── */
+.accent-teal {
+  --c-primary: #14b8a6;
+  --c-primary-hover: #0d9488;
+  --c-primary-light: #2dd4bf;
+  --c-primary-ring: #5eead4;
+  --c-primary-bg: #ccfbf1;
+  --c-primary-bg-subtle: #f0fdfa;
+  --c-primary-text: #115e59;
+}
+
 .accent-honey {
   --c-primary: #b45309;
   --c-primary-hover: #92400e;
@@ -105,6 +115,11 @@
 }
 
 /* Dark mode overrides for accent backgrounds */
+.dark.accent-teal,
+.dark .accent-teal {
+  --c-primary-bg: color-mix(in srgb, #14b8a6 18%, #0f172a);
+  --c-primary-bg-subtle: color-mix(in srgb, #14b8a6 8%, #0f172a);
+}
 .dark.accent-ocean,
 .dark .accent-ocean {
   --c-primary-bg: color-mix(in srgb, #0e7490 18%, #0f172a);

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext } from "react";
 
 export type ThemeMode = "light" | "dark" | "system";
-export type AccentColor = "honey" | "ocean" | "indigo" | "rose" | "emerald";
+export type AccentColor = "teal" | "honey" | "ocean" | "indigo" | "rose" | "emerald";
 
 const MODE_KEY = "orca_theme_mode";
 const ACCENT_KEY = "orca_theme_accent";
@@ -21,7 +21,7 @@ function applyToDOM(mode: ThemeMode, accent: AccentColor) {
 
   html.classList.toggle("dark", resolved === "dark");
 
-  html.classList.remove("accent-honey", "accent-ocean", "accent-indigo", "accent-rose", "accent-emerald");
+  html.classList.remove("accent-teal", "accent-honey", "accent-ocean", "accent-indigo", "accent-rose", "accent-emerald");
   html.classList.add(`accent-${accent}`);
 }
 
@@ -37,10 +37,10 @@ export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function useThemeProvider(): ThemeContextValue {
   const [mode, setModeState] = useState<ThemeMode>(
-    () => (localStorage.getItem(MODE_KEY) as ThemeMode) || "light"
+    () => (localStorage.getItem(MODE_KEY) as ThemeMode) || "dark"
   );
   const [accent, setAccentState] = useState<AccentColor>(
-    () => (localStorage.getItem(ACCENT_KEY) as AccentColor) || "honey"
+    () => (localStorage.getItem(ACCENT_KEY) as AccentColor) || "teal"
   );
 
   const setMode = useCallback((m: ThemeMode) => {
